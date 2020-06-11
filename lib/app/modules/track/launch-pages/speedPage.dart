@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:tracker_box/app/modules/home/home_controller.dart';
-import 'package:tracker_box/app/modules/home/home_module.dart';
+import 'package:tracker_box/app/modules/track/track_controller.dart';
+import 'package:tracker_box/app/modules/track/track_module.dart';
 
-class SpeedView extends StatefulWidget {
+class SpeedPage extends StatefulWidget {
   @override
-  _SpeedViewState createState() => _SpeedViewState();
+  _SpeedPageState createState() => _SpeedPageState();
 }
 
-class _SpeedViewState extends State<SpeedView> {
-  HomeController controller = HomeModule.to.get<HomeController>();
+class _SpeedPageState extends State<SpeedPage> {
+  TrackController controller = TrackModule.to.get<TrackController>();
 
   @override
   void initState() {

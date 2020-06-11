@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:geolocator/geolocator.dart';
+import 'package:tracker_box/app/core/model/coordinate.dart';
 
 class TrackerLocator {
   final Geolocator geolocator = new Geolocator();
@@ -41,6 +42,11 @@ class TrackerLocator {
 
   void pauseListenForPosition() {
     if (_positionStream != null) _positionStream.pause();
+  }
+
+  static Future<double> distanceBetween(Coordinate c1, Coordinate c2) {
+    return new Geolocator()
+        .distanceBetween(c1.latitude, c1.longitude, c2.latitude, c2.longitude);
   }
 
   bool get isPaused => _positionStream == null || _positionStream.isPaused;

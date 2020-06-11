@@ -18,10 +18,6 @@ abstract class _LaunchBase with Store {
   @observable
   int value = 0;
 
-  double latitude;
-
-  double longitude;
-
   @action
   selectLaunchType(LaunchType type) {
     this.type = type;

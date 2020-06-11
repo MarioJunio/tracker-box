@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_modular/flutter_modular.dart';
 import 'package:tracker_box/app/core/model/launchType.dart';
-import 'package:tracker_box/app/modules/home/views/distanceView.dart';
-import 'package:tracker_box/app/modules/home/views/speedView.dart';
-import 'package:tracker_box/app/modules/home/views/startEngineButton.dart';
+import 'package:tracker_box/app/modules/track/launch-pages/distancePage.dart';
+import 'package:tracker_box/app/modules/track/launch-pages/speedPage.dart';
+import 'package:tracker_box/app/modules/track/launch-pages/timerPage.dart';
+import 'package:tracker_box/app/modules/track/track_controller.dart';
+import 'package:tracker_box/app/modules/track/track_module.dart';
 import 'package:tracker_box/app/shared/widgets/radio/radioGroup.dart';
 import 'package:tracker_box/app/shared/widgets/radio/radioModel.dart';
 
-import 'home_controller.dart';
-
-class HomePage extends StatefulWidget {
+class CreateLaunchPage extends StatefulWidget {
   @override
-  _HomePageState createState() => _HomePageState();
+  _CreateLaunchPageState createState() => _CreateLaunchPageState();
 }
 
-class _HomePageState extends ModularState<HomePage, HomeController> {
+class _CreateLaunchPageState extends State<CreateLaunchPage> {
+  final TrackController controller = TrackModule.to.get<TrackController>();
   final PageController _pageController = PageController();
   List<RadioModel> radioModels = List();
 
@@ -30,6 +30,7 @@ class _HomePageState extends ModularState<HomePage, HomeController> {
           LaunchTypeDescription.getDescription(LaunchType.km_h),
           onTap: () {
             controller.resetLaunch(LaunchType.km_h);
+
             _pageController.animateToPage(0,
                 duration: Duration(milliseconds: 300), curve: Curves.easeInOut);
           },
@@ -42,6 +43,7 @@ class _HomePageState extends ModularState<HomePage, HomeController> {
           LaunchTypeDescription.getDescription(LaunchType.distance),
           onTap: () {
             controller.resetLaunch(LaunchType.distance);
+
             _pageController.animateToPage(1,
                 duration: Duration(milliseconds: 300), curve: Curves.easeInOut);
           },
@@ -54,6 +56,9 @@ class _HomePageState extends ModularState<HomePage, HomeController> {
           LaunchTypeDescription.getDescription(LaunchType.time),
           onTap: () {
             controller.launch.selectLaunchType(LaunchType.time);
+
+            _pageController.animateToPage(2,
+                duration: Duration(milliseconds: 300), curve: Curves.easeInOut);
           },
         ),
       );
@@ -61,41 +66,22 @@ class _HomePageState extends ModularState<HomePage, HomeController> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("Novo Launch"),
-      ),
-      body: _buildBody(),
-    );
-  }
-
-  Widget _buildBody() {
-    return Container(
-      padding: EdgeInsets.all(16),
-      child: Center(
-        child: _buildFormSetup(),
-      ),
-    );
-  }
-
-  Widget _buildFormSetup() {
     return Column(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         _buildTypes,
         SizedBox(height: 60),
         Expanded(
-            child: PageView(
-          controller: _pageController,
-          physics: NeverScrollableScrollPhysics(),
-          children: <Widget>[
-            SpeedView(),
-            DistanceView(),
-          ],
-        )),
-        SizedBox(height: 60),
-        StartEngineButton(),
-        SizedBox(height: 10),
+          child: PageView(
+            controller: _pageController,
+            physics: NeverScrollableScrollPhysics(),
+            children: <Widget>[
+              SpeedPage(),
+              DistancePage(),
+              TimerPage(),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -107,14 +93,4 @@ class _HomePageState extends ModularState<HomePage, HomeController> {
           activeBorderWidth: 1,
         ),
       );
-
-  Widget _buildTracker() {
-    return Center(
-      child: Text(
-        "${controller.speed} km/h",
-        style: TextStyle(
-            color: Colors.black87, fontSize: 40, fontWeight: FontWeight.bold),
-      ),
-    );
-  }
 }

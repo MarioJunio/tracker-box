@@ -2,19 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:tracker_box/app/core/model/launchType.dart';
 import 'package:tracker_box/app/core/model/launchUnitType.dart';
-import 'package:tracker_box/app/modules/home/home_controller.dart';
-import 'package:tracker_box/app/modules/home/home_module.dart';
+import 'package:tracker_box/app/modules/track/track_controller.dart';
+import 'package:tracker_box/app/modules/track/track_module.dart';
 import 'package:tracker_box/app/shared/utils/colors.dart';
 import 'package:tracker_box/app/shared/widgets/radio/radioGroup.dart';
 import 'package:tracker_box/app/shared/widgets/radio/radioModel.dart';
 
-class DistanceView extends StatefulWidget {
+class DistancePage extends StatefulWidget {
   @override
-  _DistanceViewState createState() => _DistanceViewState();
+  _DistancePageState createState() => _DistancePageState();
 }
 
-class _DistanceViewState extends State<DistanceView> {
-  final HomeController controller = HomeModule.to.get<HomeController>();
+class _DistancePageState extends State<DistancePage> {
+  final TrackController controller = TrackModule.to.get<TrackController>();
   final TextEditingController _distanceInputController =
       TextEditingController();
   final FocusNode _focusNode = FocusNode();
