@@ -1,17 +1,27 @@
+import 'dart:async';
+
 import 'package:geolocator/geolocator.dart';
 import 'package:mobx/mobx.dart';
 import 'package:tracker_box/app/core/geolocator/trackerLocator.dart';
+import 'package:tracker_box/app/core/location/location.dart';
 import 'package:tracker_box/app/core/model/coordinate.dart';
 import 'package:tracker_box/app/core/model/launch.dart';
 import 'package:tracker_box/app/core/model/launchType.dart';
+import 'package:tracker_box/app/core/model/launchUnitType.dart';
 import 'package:tracker_box/app/core/model/track.dart';
+import 'package:tracker_box/app/core/model/trackStatus.dart';
+import 'package:tracker_box/app/shared/preferences/appPrefs.dart';
 
 part 'track_controller.g.dart';
 
 class TrackController = _TrackControllerBase with _$TrackController;
 
 abstract class _TrackControllerBase with Store {
-  final TrackerLocator trackerLocator = new TrackerLocator();
+  final ILocation trackerLocator = new TrackerLocator();
+
+  final TrackerLocator trackerCalibrate = new TrackerLocator();
+
+  Timer _countTimer, _countDownTimer;
 
   @observable
   Launch launch;
@@ -22,8 +32,13 @@ abstract class _TrackControllerBase with Store {
   @observable
   bool active = false;
 
+  @observable
+  int prepareCountDown = AppPreferences.TRACK_START_COUNT_DOWN;
+
   _TrackControllerBase() {
-    resetLaunch(LaunchType.km_h);
+    resetLaunch(LaunchType.speed);
+
+    trackerCalibrate.listenForPosition(_listenForCalibrate);
   }
 
   resetLaunch(LaunchType type) {
@@ -32,15 +47,30 @@ abstract class _TrackControllerBase with Store {
   }
 
   @action
-  toggleTracker() {
-    _refresh();
+  publishTrack() {
+    resetLaunch(LaunchType.speed);
 
-    // inicia a track caso esteja parada
-    // caso contrario pare o launch atual
-    if (!track.inProgress)
-      this._startTracking();
-    else
-      this._stopTracking();
+    track.reset();
+    track.setTrackStatus(TrackStatus.standby);
+
+    //TODO: salva track no device local ou sincroniza com a nuvem
+  }
+
+  @action
+  discartTrack() {
+    resetLaunch(LaunchType.speed);
+
+    track.reset();
+    track.setTrackStatus(TrackStatus.standby);
+  }
+
+  @action
+  toggleTracker() {
+    if (track.isStandby)
+      _prepareTracking();
+    else if (track.isPrepare)
+      _cancelTracking();
+    else if (track.isActive) _stopTracking();
   }
 
   @action
@@ -49,49 +79,151 @@ abstract class _TrackControllerBase with Store {
   }
 
   @action
-  _startTracking() {
-    // reinicia o track
-    track = new Track();
+  _prepareTracking() {
+    track.setTrackStatus(TrackStatus.prepare);
 
-    // inicia listener para obter a posição mais atual
-    trackerLocator
-        .listenForPosition(_listenForPosition)
-        .then((value) => _refresh());
+    prepareCountDown = AppPreferences.TRACK_START_COUNT_DOWN;
+
+    // inicia contador regressivo
+    _countDownTimer = Timer.periodic(Duration(seconds: 1), (timer) async {
+      prepareCountDown -= 1;
+
+      // quando atingir a contagem 0, inicie o tracking
+      if (prepareCountDown <= 0) {
+        timer.cancel();
+
+        await Future.delayed(Duration(milliseconds: 300));
+
+        _startTracking();
+      }
+    });
   }
 
   @action
-  void _stopTracking() {
-    // pausa o listener de posições
-    trackerLocator.pauseListenForPosition();
+  _startTracking() {
+    // reinicia a track
+    track = new Track();
 
-    _refresh();
+    // inicia listener para obter a posição mais atual
+    trackerLocator.listenForPosition(_listenForPosition).then((value) {
+      if (value) {
+        track.setTrackStatus(TrackStatus.active);
+      } else {
+        //TODO: Exibir mensagem indicando que não poderá iniciar o tracking
+        print("=> Track não inciado!");
+      }
+    });
+  }
+
+  @action
+  _stopTracking() {
+    // pausa o listener de posições
+    trackerLocator.cancelListener();
+
+    // para o temporizador
+    _stopTimer();
+
+    track.setTrackStatus(TrackStatus.complete);
+  }
+
+  @action
+  _cancelTracking() {
+    _countDownTimer?.cancel();
+
+    track.setTrackStatus(TrackStatus.standby);
   }
 
   @action
   _listenForPosition(Position position) {
-
+    // precisão em metros para calibragem
     track.accuracy = position.accuracy;
 
-    if (position.accuracy <= 15) {
+    // converte velocidade de m/s -> km/h
+    final int tmpSpeed = (position.speed * 3.6).truncate();
 
-      // converte velocidade de m/s -> km/h
-      final int tmpSpeed = (position.speed * 3.6).truncate();
+    // inicia temporizador da track
+    if (track.canStartTimer && tmpSpeed > 0) _startTimer();
 
-      // calcula distancia
-      track.coordinates.add(new Coordinate(
-        latitude: position.latitude,
-        longitude: position.longitude,
-      ));
+    // define velocidade inicial
+    track.setStartSpeed(tmpSpeed < 0 ? 0 : tmpSpeed);
 
-      track.calculateDistance();
-      track.calculateDistanceIntegral();
+    // não aceita velocidade negativa, acontece se inicia o GPS
+    track.setSpeed(tmpSpeed < 0 ? 0 : tmpSpeed);
 
-      // não aceita velocidade negativa, acontece se inicia o GPS
-      track.setSpeed(tmpSpeed < 0 ? 0 : tmpSpeed);
+    // calcula distancia
+    track.coordinates.add(new Coordinate(
+      latitude: position.latitude,
+      longitude: position.longitude,
+    ));
+
+    track.calculateDistance();
+
+    // checa se atingiu algum limite definido
+    _checkStopCondition();
+  }
+
+  @action
+  _listenForCalibrate(Position position) {
+    track.accuracy = position.accuracy;
+
+    // print("Calibrando: ${track.accuracy}");
+  }
+
+  _startTimer() {
+    track.canStartTimer = false;
+
+    if (!(_countTimer?.isActive ?? false))
+      _countTimer = Timer.periodic(
+          Duration(milliseconds: AppPreferences.TRACK_TIMER_DELAY_MILLI),
+          (timer) {
+        track.incrementTimer(AppPreferences.TRACK_TIMER_DELAY_MILLI);
+      });
+  }
+
+  _stopTimer() {
+    _countTimer?.cancel();
+  }
+
+  _checkStopCondition() {
+    switch (launch.type) {
+      case LaunchType.speed:
+        _speedStopCondition();
+        break;
+
+      case LaunchType.distance:
+        _distanceStopCondition();
+        break;
+
+      case LaunchType.time:
+        _timeStopCondition();
+        break;
     }
   }
 
-  _refresh() {
-    track.setInProgress(!trackerLocator.isPaused);
+  _speedStopCondition() {
+    // verifica se alcançou a velocidade defina em km/h
+    if (track.speed >= launch.value) {
+      track.setSpeed(launch.value);
+
+      _stopTracking();
+    }
+  }
+
+  _distanceStopCondition() {
+    // verifica se alcançou a distancia defina em metros
+    if (track.distance >= launch.valueInMeters) {
+      track.setDistance(launch.value.toDouble());
+
+      _stopTracking();
+    }
+  }
+
+  _timeStopCondition() {
+    // verifica se alcançou o tempo definido em segundos
+    if (track.timer >= launch.valueInSeconds) {
+      track.setTimer(launch.value);
+
+      _stopTracking();
+    }
   }
 }

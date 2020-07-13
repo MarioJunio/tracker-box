@@ -111,7 +111,7 @@ class _RadioGroupState extends State<RadioGroup> {
     return BorderSide(
       width: widget.active ? widget.activeBorderWidth : widget.borderWidth,
       color:
-          widget.active ? Theme.of(context).primaryColor : ColorsUtil.lightGrey,
+          widget.active ? Theme.of(context).primaryColor : ColorUtils.lightGrey,
     );
   }
 }

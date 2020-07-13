@@ -1,3 +1,3 @@
 enum LaunchUnitType {
-  meter, km, seconds, minute
+  km_h, meter, km, seconds, minute
 }

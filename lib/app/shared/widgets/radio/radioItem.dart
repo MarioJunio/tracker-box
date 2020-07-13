@@ -46,7 +46,7 @@ class _RadioItemState extends State<RadioItem> {
     } else if (widget.active) {
       return Theme.of(context).primaryColor;
     } else {
-      return ColorsUtil.lightGrey;
+      return ColorUtils.lightGrey;
     }
   }
 
@@ -98,7 +98,7 @@ class _RadioItemState extends State<RadioItem> {
       if (widget.active) {
         return Theme.of(context).primaryColor;
       } else {
-        return ColorsUtil.lightGrey;
+        return ColorUtils.lightGrey;
       }
     } 
 
@@ -109,7 +109,7 @@ class _RadioItemState extends State<RadioItem> {
     if (widget._model.isSelected) {
       return widget.active
           ? Theme.of(context).primaryColor
-          : ColorsUtil.lightGrey;
+          : ColorUtils.lightGrey;
     } else {
       return Colors.transparent;
     }

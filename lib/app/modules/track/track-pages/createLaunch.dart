@@ -27,9 +27,9 @@ class _CreateLaunchPageState extends State<CreateLaunchPage> {
         new RadioModel(
           true,
           RadioModelLocation.first,
-          LaunchTypeDescription.getDescription(LaunchType.km_h),
+          LaunchTypeDescription.getDescription(LaunchType.speed),
           onTap: () {
-            controller.resetLaunch(LaunchType.km_h);
+            controller.resetLaunch(LaunchType.speed);
 
             _pageController.animateToPage(0,
                 duration: Duration(milliseconds: 300), curve: Curves.easeInOut);
@@ -67,10 +67,8 @@ class _CreateLaunchPageState extends State<CreateLaunchPage> {
   @override
   Widget build(BuildContext context) {
     return Column(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         _buildTypes,
-        SizedBox(height: 60),
         Expanded(
           child: PageView(
             controller: _pageController,

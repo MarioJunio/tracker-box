@@ -1,10 +1,10 @@
-enum LaunchType { km_h, distance, time }
+enum LaunchType { speed, distance, time }
 
 class LaunchTypeDescription {
   static String getDescription(LaunchType type) {
 
     switch (type) {
-      case LaunchType.km_h:
+      case LaunchType.speed:
         return "Km/h";
 
       case LaunchType.distance:

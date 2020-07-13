@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:geolocator/geolocator.dart';
-import 'package:tracker_box/app/core/model/coordinate.dart';
+import 'package:tracker_box/app/core/location/location.dart';
 
-class TrackerLocator {
+class TrackerLocator extends ILocation {
   final Geolocator geolocator = new Geolocator();
   final int distanceFilter;
 
@@ -13,12 +13,15 @@ class TrackerLocator {
 
   TrackerLocator({this.distanceFilter = 0}) {
     locatorOptions = LocationOptions(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: this.distanceFilter,
-        forceAndroidLocationManager: true);
+      accuracy: LocationAccuracy.bestForNavigation,
+      timeInterval: 1,
+      distanceFilter: this.distanceFilter,
+      forceAndroidLocationManager: true,
+    );
   }
 
-  Future<bool> listenForPosition(Function onPositionChanged) async {
+  @override
+  listenForPosition(Function onPositionChanged) async {
     GeolocationStatus status =
         await geolocator.checkGeolocationPermissionStatus();
 
@@ -28,25 +31,17 @@ class TrackerLocator {
     }
 
     // listen for changes in gps position
-    if (_positionStream != null) {
-      _positionStream.resume();
-    } else {
-      _positionStream = this
-          .geolocator
-          .getPositionStream(this.locatorOptions)
-          .listen(onPositionChanged);
-    }
+    _positionStream = this
+        .geolocator
+        .getPositionStream(this.locatorOptions)
+        .listen(onPositionChanged);
 
     return Future.value(true);
   }
 
-  void pauseListenForPosition() {
-    if (_positionStream != null) _positionStream.pause();
-  }
-
-  static Future<double> distanceBetween(Coordinate c1, Coordinate c2) {
-    return new Geolocator()
-        .distanceBetween(c1.latitude, c1.longitude, c2.latitude, c2.longitude);
+  @override
+  cancelListener() {
+    _positionStream?.cancel();
   }
 
   bool get isPaused => _positionStream == null || _positionStream.isPaused;

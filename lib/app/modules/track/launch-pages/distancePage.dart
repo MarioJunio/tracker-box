@@ -4,6 +4,7 @@ import 'package:tracker_box/app/core/model/launchType.dart';
 import 'package:tracker_box/app/core/model/launchUnitType.dart';
 import 'package:tracker_box/app/modules/track/track_controller.dart';
 import 'package:tracker_box/app/modules/track/track_module.dart';
+import 'package:tracker_box/app/shared/preferences/appPrefs.dart';
 import 'package:tracker_box/app/shared/utils/colors.dart';
 import 'package:tracker_box/app/shared/widgets/radio/radioGroup.dart';
 import 'package:tracker_box/app/shared/widgets/radio/radioModel.dart';
@@ -34,7 +35,7 @@ class _DistancePageState extends State<DistancePage> {
         controller.setActive(_focusNode.hasFocus);
       });
 
-      controller.launch.selectLaunchType(LaunchType.km_h);
+      controller.launch.selectLaunchType(LaunchType.speed);
       controller.launch.setLaunchUnitType(LaunchUnitType.meter);
     });
 
@@ -50,6 +51,9 @@ class _DistancePageState extends State<DistancePage> {
   @override
   Widget build(BuildContext context) {
     return Container(
+      margin: EdgeInsets.only(
+          bottom: MediaQuery.of(context).size.height *
+              AppPreferences.TRACK_TOGGLE_BUTTON_HEIGHT),
       child: Row(
         children: <Widget>[
           _buildTextField(),
@@ -86,7 +90,7 @@ class _DistancePageState extends State<DistancePage> {
           hintText: "Informe a distância",
           enabledBorder: OutlineInputBorder(
             borderSide: BorderSide(
-              color: ColorsUtil.lightGrey,
+              color: ColorUtils.lightGrey,
             ),
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(4),

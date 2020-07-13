@@ -42,4 +42,12 @@ abstract class _LaunchBase with Store {
 
   @computed
   String get valueFormatted => "$value $launchTypeDescription";
+
+  @computed
+  int get valueInMeters =>
+      unitType == LaunchUnitType.meter ? value * 1000 : value;
+
+  @computed
+  int get valueInSeconds =>
+      unitType == LaunchUnitType.minute ? value * 60 : value;
 }

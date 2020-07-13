@@ -5,18 +5,20 @@ import 'dart:math';
 class GaugeChart extends StatelessWidget {
   final List<charts.Series> seriesList;
   final bool animate;
+  final int width;
 
-  GaugeChart(this.seriesList, {this.animate});
+  GaugeChart(this.seriesList, {this.width = 20, this.animate});
 
   factory GaugeChart.fromValue({
     @required double value,
     @required double max,
+    @required int width,
     @required Color color,
     bool animate,
   }) {
     return GaugeChart(
       _createDataFromValue(value, max, color),
-      // Disable animations for image tests.
+      width: width,
       animate: animate,
     );
   }
@@ -30,7 +32,7 @@ class GaugeChart extends StatelessWidget {
       // the chart will be left as a hole in the center. Adjust the start
       // angle and the arc length of the pie so it resembles a gauge.
       defaultRenderer: charts.ArcRendererConfig(
-        arcWidth: 20,
+        arcWidth: this.width,
         startAngle: 3 / 5 * pi,
         arcLength: 9 / 5 * pi,
         //arcRendererDecorators: [charts.ArcLabelDecorator(labelPosition: charts.ArcLabelPosition.outside)],
@@ -39,7 +41,10 @@ class GaugeChart extends StatelessWidget {
   }
 
   static List<charts.Series<GaugeSegment, String>> _createDataFromValue(
-      double value, double max, Color color) {
+    double value,
+    double max,
+    Color color,
+  ) {
     double toShow = (value) / max;
     final data = [
       GaugeSegment('Main', toShow, color),

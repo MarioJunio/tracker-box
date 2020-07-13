@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:tracker_box/app/core/model/launchType.dart';
+import 'package:tracker_box/app/core/model/launchUnitType.dart';
 import 'package:tracker_box/app/modules/track/track_controller.dart';
 import 'package:tracker_box/app/modules/track/track_module.dart';
+import 'package:tracker_box/app/shared/preferences/appPrefs.dart';
 
 class SpeedPage extends StatefulWidget {
   @override
@@ -14,6 +17,9 @@ class _SpeedPageState extends State<SpeedPage> {
   @override
   void initState() {
     super.initState();
+
+    controller.launch.selectLaunchType(LaunchType.speed);
+    controller.launch.setLaunchUnitType(LaunchUnitType.km_h);
   }
 
   @override
@@ -26,11 +32,13 @@ class _SpeedPageState extends State<SpeedPage> {
                 style: Theme.of(context).textTheme.subtitle2);
 
         String labelValue = controller.launch.value > 0
-            ? "${controller.launch.value} ${controller.launch.launchTypeDescription}"
+            ? "Velocidade ${controller.launch.value} ${controller.launch.launchTypeDescription}"
             : "${controller.launch.launchTypeDescription}";
 
         return Container(
-          margin: EdgeInsets.only(top: 50),
+          margin: EdgeInsets.only(
+          bottom: MediaQuery.of(context).size.height *
+              AppPreferences.TRACK_TOGGLE_BUTTON_HEIGHT),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
