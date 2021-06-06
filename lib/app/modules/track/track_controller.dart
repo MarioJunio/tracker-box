@@ -7,7 +7,6 @@ import 'package:tracker_box/app/core/location/location.dart';
 import 'package:tracker_box/app/core/model/coordinate.dart';
 import 'package:tracker_box/app/core/model/launch.dart';
 import 'package:tracker_box/app/core/model/launchType.dart';
-import 'package:tracker_box/app/core/model/launchUnitType.dart';
 import 'package:tracker_box/app/core/model/track.dart';
 import 'package:tracker_box/app/core/model/trackStatus.dart';
 import 'package:tracker_box/app/shared/preferences/appPrefs.dart';
@@ -43,17 +42,17 @@ abstract class _TrackControllerBase with Store {
 
   resetLaunch(LaunchType type) {
     launch = new Launch();
-    launch.type = type;
+    launch.selectLaunchType(type);
   }
 
   @action
   publishTrack() {
+    //TODO: salva track no device local ou sincroniza com a nuvem
+
     resetLaunch(LaunchType.speed);
 
     track.reset();
     track.setTrackStatus(TrackStatus.standby);
-
-    //TODO: salva track no device local ou sincroniza com a nuvem
   }
 
   @action
@@ -89,10 +88,10 @@ abstract class _TrackControllerBase with Store {
       prepareCountDown -= 1;
 
       // quando atingir a contagem 0, inicie o tracking
-      if (prepareCountDown <= 0) {
+      if (prepareCountDown <= 1) {
         timer.cancel();
 
-        await Future.delayed(Duration(milliseconds: 300));
+        await Future.delayed(Duration(milliseconds: 1000));
 
         _startTracking();
       }
@@ -102,7 +101,7 @@ abstract class _TrackControllerBase with Store {
   @action
   _startTracking() {
     // reinicia a track
-    track = new Track();
+    track.reset();
 
     // inicia listener para obter a posição mais atual
     trackerLocator.listenForPosition(_listenForPosition).then((value) {
@@ -177,6 +176,10 @@ abstract class _TrackControllerBase with Store {
           Duration(milliseconds: AppPreferences.TRACK_TIMER_DELAY_MILLI),
           (timer) {
         track.incrementTimer(AppPreferences.TRACK_TIMER_DELAY_MILLI);
+
+        if (launch.type == LaunchType.time) {
+          _timeStopCondition();
+        }
       });
   }
 
@@ -184,19 +187,11 @@ abstract class _TrackControllerBase with Store {
     _countTimer?.cancel();
   }
 
-  _checkStopCondition() {
-    switch (launch.type) {
-      case LaunchType.speed:
-        _speedStopCondition();
-        break;
-
-      case LaunchType.distance:
-        _distanceStopCondition();
-        break;
-
-      case LaunchType.time:
-        _timeStopCondition();
-        break;
+  _checkStopCondition() async {
+    if (launch.type == LaunchType.speed) {
+      _speedStopCondition();
+    } else if (launch.type == LaunchType.distance) {
+      _distanceStopCondition();
     }
   }
 
@@ -220,8 +215,8 @@ abstract class _TrackControllerBase with Store {
 
   _timeStopCondition() {
     // verifica se alcançou o tempo definido em segundos
-    if (track.timer >= launch.valueInSeconds) {
-      track.setTimer(launch.value);
+    if (track.timer >= launch.valueInMilliseconds) {
+      track.setTimer(launch.valueInMilliseconds);
 
       _stopTracking();
     }

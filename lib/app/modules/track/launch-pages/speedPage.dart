@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:flutter_modular/flutter_modular.dart';
 import 'package:tracker_box/app/core/model/launchType.dart';
 import 'package:tracker_box/app/core/model/launchUnitType.dart';
 import 'package:tracker_box/app/modules/track/track_controller.dart';
-import 'package:tracker_box/app/modules/track/track_module.dart';
 import 'package:tracker_box/app/shared/preferences/appPrefs.dart';
 
 class SpeedPage extends StatefulWidget {
@@ -12,7 +12,7 @@ class SpeedPage extends StatefulWidget {
 }
 
 class _SpeedPageState extends State<SpeedPage> {
-  TrackController controller = TrackModule.to.get<TrackController>();
+  TrackController controller = Modular.get<TrackController>();
 
   @override
   void initState() {
@@ -37,8 +37,8 @@ class _SpeedPageState extends State<SpeedPage> {
 
         return Container(
           margin: EdgeInsets.only(
-          bottom: MediaQuery.of(context).size.height *
-              AppPreferences.TRACK_TOGGLE_BUTTON_HEIGHT),
+              bottom: MediaQuery.of(context).size.height *
+                  AppPreferences.TRACK_TOGGLE_BUTTON_HEIGHT),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[

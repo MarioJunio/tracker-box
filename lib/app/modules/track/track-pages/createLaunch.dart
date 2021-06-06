@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_modular/flutter_modular.dart';
 import 'package:tracker_box/app/core/model/launchType.dart';
 import 'package:tracker_box/app/modules/track/launch-pages/distancePage.dart';
 import 'package:tracker_box/app/modules/track/launch-pages/speedPage.dart';
 import 'package:tracker_box/app/modules/track/launch-pages/timerPage.dart';
 import 'package:tracker_box/app/modules/track/track_controller.dart';
-import 'package:tracker_box/app/modules/track/track_module.dart';
+import 'package:tracker_box/app/shared/utils/keyboard_utils.dart';
 import 'package:tracker_box/app/shared/widgets/radio/radioGroup.dart';
 import 'package:tracker_box/app/shared/widgets/radio/radioModel.dart';
 
@@ -14,9 +15,10 @@ class CreateLaunchPage extends StatefulWidget {
 }
 
 class _CreateLaunchPageState extends State<CreateLaunchPage> {
-  final TrackController controller = TrackModule.to.get<TrackController>();
+  final TrackController controller = Modular.get<TrackController>();
   final PageController _pageController = PageController();
-  List<RadioModel> radioModels = List();
+
+  List<RadioModel> radioModels = [];
 
   @override
   void initState() {
@@ -73,6 +75,9 @@ class _CreateLaunchPageState extends State<CreateLaunchPage> {
           child: PageView(
             controller: _pageController,
             physics: NeverScrollableScrollPhysics(),
+            onPageChanged: (int pageNumber) {
+              KeyboardUtils.close(context);
+            },
             children: <Widget>[
               SpeedPage(),
               DistancePage(),

@@ -48,6 +48,6 @@ abstract class _LaunchBase with Store {
       unitType == LaunchUnitType.meter ? value * 1000 : value;
 
   @computed
-  int get valueInSeconds =>
-      unitType == LaunchUnitType.minute ? value * 60 : value;
+  int get valueInMilliseconds =>
+      (unitType == LaunchUnitType.minute ? value * 60 : value) * 1000;
 }

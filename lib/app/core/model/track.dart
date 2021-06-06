@@ -47,11 +47,13 @@ abstract class _TrackBase with Store {
 
   @action
   reset() {
+    startSpeed = 0;
     speed = 0;
     distance = 0;
     distanceIntegral = 0;
     timer = 0;
     canStartTimer = true;
+    coordinates = new List();
   }
 
   @action
@@ -119,10 +121,13 @@ abstract class _TrackBase with Store {
   incrementTimer(int value) => this.timer += value;
 
   @computed
-  String get timerFormatted => TrackFormatter.formatTrackTimer(timer);
+  String get speedFormatted => TrackFormatter.formatSpeed(speed);
 
   @computed
-  String get distanceFormatted => TrackFormatter.formatTrackDistance(distance);
+  String get timerFormatted => TrackFormatter.formatTimer(timer);
+
+  @computed
+  String get distanceFormatted => TrackFormatter.formatDistance(distance);
 
   @computed
   bool get calibrated =>

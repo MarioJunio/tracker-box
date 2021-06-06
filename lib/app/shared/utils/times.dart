@@ -10,11 +10,13 @@ class TimerUtils {
     // int restMillis = (millis - (hours * 3600000) - (minutes * 60000) - (seconds * 1000)) ~/ 100;
     int restMillis = (millis % 1000) ~/ 100;
 
-    if (hours == 0 && minutes == 0) return "${_formatTime(seconds)}.$restMillis seg";
-    
-    if (hours == 0) return "${_formatTime(minutes)}:${_formatTime(seconds)} min";
+    if (hours == 0 && minutes == 0)
+      return "${_formatTime(seconds)}.$restMillis seg";
 
-    return "${nf.format(hours)}:${nf.format(minutes)}:${nf.format(seconds)}";
+    if (hours == 0)
+      return "${_formatTime(minutes)}:${_formatTime(seconds)} min";
+
+    return "${nf.format(hours)}:${nf.format(minutes)}";
   }
 
   static String _formatTime(int value) => NumberFormat("00").format(value);

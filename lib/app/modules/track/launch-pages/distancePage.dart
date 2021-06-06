@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:flutter_modular/flutter_modular.dart';
 import 'package:tracker_box/app/core/model/launchType.dart';
 import 'package:tracker_box/app/core/model/launchUnitType.dart';
 import 'package:tracker_box/app/modules/track/track_controller.dart';
-import 'package:tracker_box/app/modules/track/track_module.dart';
 import 'package:tracker_box/app/shared/preferences/appPrefs.dart';
 import 'package:tracker_box/app/shared/utils/colors.dart';
+import 'package:tracker_box/app/shared/utils/keyboard_utils.dart';
 import 'package:tracker_box/app/shared/widgets/radio/radioGroup.dart';
 import 'package:tracker_box/app/shared/widgets/radio/radioModel.dart';
 
@@ -15,27 +16,33 @@ class DistancePage extends StatefulWidget {
 }
 
 class _DistancePageState extends State<DistancePage> {
-  final TrackController controller = TrackModule.to.get<TrackController>();
+  final TrackController controller = Modular.get<TrackController>();
   final TextEditingController _distanceInputController =
       TextEditingController();
   final FocusNode _focusNode = FocusNode();
 
-  List<RadioModel> items = List()
-    ..add(
-      RadioModel(true, RadioModelLocation.first, "Metros"),
-    )
-    ..add(
-      RadioModel(false, RadioModelLocation.last, "Km"),
-    );
+  List<RadioModel> items = new List();
 
   @override
   void initState() {
+    items
+      ..add(
+        RadioModel(true, RadioModelLocation.first, "Metros", onTap: () {
+          controller.launch.setLaunchUnitType(LaunchUnitType.meter);
+        }),
+      )
+      ..add(
+        RadioModel(false, RadioModelLocation.last, "Km", onTap: () {
+          controller.launch.setLaunchUnitType(LaunchUnitType.km);
+        }),
+      );
+
     _focusNode.addListener(() {
       setState(() {
         controller.setActive(_focusNode.hasFocus);
       });
 
-      controller.launch.selectLaunchType(LaunchType.speed);
+      controller.launch.selectLaunchType(LaunchType.distance);
       controller.launch.setLaunchUnitType(LaunchUnitType.meter);
     });
 
@@ -72,7 +79,7 @@ class _DistancePageState extends State<DistancePage> {
           ),
           onPressed: () {
             _focusNode.unfocus();
-            FocusScope.of(context).requestFocus(FocusNode());
+            KeyboardUtils.close(context);
           })
       : Container();
 

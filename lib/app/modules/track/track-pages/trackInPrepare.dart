@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:flutter_modular/flutter_modular.dart';
 import 'package:tracker_box/app/modules/track/track_controller.dart';
-import 'package:tracker_box/app/modules/track/track_module.dart';
 
 class TrackInPreparePage extends StatefulWidget {
   @override
@@ -9,7 +9,7 @@ class TrackInPreparePage extends StatefulWidget {
 }
 
 class _TrackInPreparePageState extends State<TrackInPreparePage> {
-  final TrackController controller = TrackModule.to.get<TrackController>();
+  final TrackController controller = Modular.get<TrackController>();
 
   @override
   Widget build(BuildContext context) {

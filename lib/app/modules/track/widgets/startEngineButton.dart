@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:flutter_modular/flutter_modular.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:tracker_box/app/modules/track/track_controller.dart';
-import 'package:tracker_box/app/modules/track/track_module.dart';
 import 'package:tracker_box/app/shared/utils/colors.dart';
 
 class StartEngineButton extends StatefulWidget {
@@ -18,7 +18,7 @@ class StartEngineButton extends StatefulWidget {
 }
 
 class _StartEngineButtonState extends State<StartEngineButton> {
-  final TrackController controller = TrackModule.to.get<TrackController>();
+  final TrackController controller = Modular.get<TrackController>();
 
   @override
   Widget build(BuildContext context) {

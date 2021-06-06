@@ -22,7 +22,7 @@ class _TrackPageState extends ModularState<TrackPage, TrackController> {
         title: Text("Crie seu Track"),
       ),
       body: _buildBody(),
-      resizeToAvoidBottomPadding: false,
+      resizeToAvoidBottomInset: false,
     );
   }
 
@@ -65,8 +65,10 @@ class _TrackPageState extends ModularState<TrackPage, TrackController> {
           child: Align(
             alignment: FractionalOffset.bottomCenter,
             child: StartEngineButton(
-              width: MediaQuery.of(context).size.height * AppPreferences.TRACK_TOGGLE_BUTTON_HEIGHT,
-              height: MediaQuery.of(context).size.height * AppPreferences.TRACK_TOGGLE_BUTTON_HEIGHT,
+              width: MediaQuery.of(context).size.height *
+                  AppPreferences.TRACK_TOGGLE_BUTTON_HEIGHT,
+              height: MediaQuery.of(context).size.height *
+                  AppPreferences.TRACK_TOGGLE_BUTTON_HEIGHT,
             ),
           ),
         ),

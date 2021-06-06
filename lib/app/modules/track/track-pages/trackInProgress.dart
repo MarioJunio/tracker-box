@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:flutter_modular/flutter_modular.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:tracker_box/app/core/model/launchType.dart';
 import 'package:tracker_box/app/modules/track/track_controller.dart';
-import 'package:tracker_box/app/modules/track/track_module.dart';
 import 'package:tracker_box/app/shared/widgets/gauge/gauge.dart';
 
 class TrackInProgressPage extends StatefulWidget {
@@ -12,7 +12,7 @@ class TrackInProgressPage extends StatefulWidget {
 }
 
 class _TrackInProgressPageState extends State<TrackInProgressPage> {
-  final TrackController controller = TrackModule.to.get<TrackController>();
+  final TrackController controller = Modular.get<TrackController>();
 
   @override
   Widget build(BuildContext context) {
@@ -23,18 +23,17 @@ class _TrackInProgressPageState extends State<TrackInProgressPage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
             _buildStartSpeedIndicator(),
-            SizedBox(height: 16),
+            _mainGap,
             _mainIndicator,
-            // _buildCurrentSpeedIndicator(),
-            SizedBox(height: 16),
-            _buildIndicators(),
-            // SizedBox(height: 16),
-            // _builtGPSAccuracyIndicator()
+            _mainGap,
+            _buildSecondaryIndicators,
           ],
         ),
       ),
     );
   }
+
+  Widget get _mainGap => SizedBox(height: 16);
 
   Widget get _mainIndicator {
     return Observer(
@@ -44,61 +43,94 @@ class _TrackInProgressPageState extends State<TrackInProgressPage> {
               "Velocidade atual",
               controller.track.speed.toDouble(),
               controller.launch.value.toDouble(),
-              "${controller.track.speed} km/h");
+              controller.track.speedFormatted);
         } else if (controller.launch.type == LaunchType.distance) {
-        } else if (controller.launch.type == LaunchType.time) {}
+          return _buildMainIndicator(
+              "Distância percorrida",
+              controller.track.distance,
+              controller.launch.value.toDouble(),
+              controller.track.distanceFormatted);
+        } else if (controller.launch.type == LaunchType.time) {
+          return _buildMainIndicator(
+              "Tempo",
+              controller.track.timer.toDouble(),
+              controller.launch.valueInMilliseconds.toDouble(),
+              controller.track.timerFormatted);
+        }
 
-        return Container();
+        return Container(
+          child: Text("Tipo não identificado"),
+        );
       },
     );
   }
 
-  Widget _buildMainIndicator(String title, double currentSpeed, double maxSpeed,
+  Widget _buildMainIndicator(String title, double currentValue, double maxValue,
       String formattedValue) {
-    return Observer(
-      builder: (_) {
-        return Card(
-          child: Container(
-            padding: EdgeInsets.only(top: 16),
-            child: Column(
-              children: <Widget>[
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xff00897b),
-                  ),
-                ),
-                Container(
-                  height: 180,
-                  width: double.infinity,
-                  child: Stack(
-                    children: <Widget>[
-                      GaugeChart.fromValue(
-                        value: currentSpeed,
-                        max: maxSpeed,
-                        animate: false,
-                        width: 16,
-                        color: Theme.of(context).primaryColor,
-                      ),
-                      Center(
-                        child: Text(
-                          formattedValue,
-                          style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Theme.of(context).primaryColor),
-                        ),
-                      )
-                    ],
-                  ),
-                ),
-              ],
+    return Card(
+      child: Container(
+        padding: EdgeInsets.only(top: 16),
+        child: Column(
+          children: <Widget>[
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Color(0xff00897b),
+              ),
             ),
-          ),
-        );
-      },
+            Container(
+              height: 180,
+              width: double.infinity,
+              child: Stack(
+                children: <Widget>[
+                  GaugeChart.fromValue(
+                    value: currentValue,
+                    max: maxValue,
+                    animate: false,
+                    width: 16,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                  Center(
+                    child: Text(
+                      formattedValue,
+                      style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).primaryColor),
+                    ),
+                  )
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Row get _buildSecondaryIndicators {
+    var first;
+    var second;
+
+    if (controller.launch.type == LaunchType.speed) {
+      first = _buildDistanceIndicator();
+      second = _builtCountTimerIndicator();
+    } else if (controller.launch.type == LaunchType.distance) {
+      first = _buildSpeedIndicator();
+      second = _builtCountTimerIndicator();
+    } else if (controller.launch.type == LaunchType.time) {
+      first = _buildSpeedIndicator();
+      second = _buildDistanceIndicator();
+    }
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: <Widget>[
+        Expanded(child: first),
+        Expanded(child: second),
+      ],
     );
   }
 
@@ -154,59 +186,50 @@ class _TrackInProgressPageState extends State<TrackInProgressPage> {
         },
       );
 
-  Widget _buildCurrentSpeedIndicator() => Observer(
-        builder: (_) {
-          return Card(
-            child: Container(
-              padding: EdgeInsets.only(top: 16),
-              child: Column(
+  Widget _buildSpeedIndicator() => Card(
+        child: Container(
+          padding: EdgeInsets.all(16),
+          child: Column(
+            children: <Widget>[
+              Text(
+                "Velocidade",
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xff00897b),
+                ),
+              ),
+              SizedBox(height: 16),
+              Stack(
                 children: <Widget>[
-                  Text(
-                    "Velocidade atual",
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xff00897b),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: FaIcon(
+                      FontAwesomeIcons.tachometerAlt,
+                      size: 26,
+                      color: Theme.of(context).primaryColor,
                     ),
                   ),
-                  Container(
-                    height: 180,
-                    width: double.infinity,
-                    child: Stack(
-                      children: <Widget>[
-                        GaugeChart.fromValue(
-                          animate: false,
-                          value: controller.track.speed.toDouble(),
-                          // value: 90,
-                          max: controller.launch.value.toDouble(),
-                          width: 16,
-                          color: Theme.of(context).primaryColor,
-                        ),
-                        Center(
-                          child: Text(
-                            "${controller.track.speed} km/h",
-                            style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: Theme.of(context).primaryColor),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Observer(
+                      builder: (_) {
+                        return Text(
+                          "${controller.track.speedFormatted}",
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).primaryColor,
                           ),
-                        )
-                      ],
+                        );
+                      },
                     ),
                   ),
                 ],
               ),
-            ),
-          );
-        },
-      );
-
-  Row _buildIndicators() => Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: <Widget>[
-          Expanded(child: _buildDistanceIndicator()),
-          Expanded(child: _builtCountTimerIndicator()),
-        ],
+            ],
+          ),
+        ),
       );
 
   Widget _buildDistanceIndicator() => Card(

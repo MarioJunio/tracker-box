@@ -1,14 +1,18 @@
 import 'package:intl/intl.dart';
 
 class TrackFormatter {
-  static String formatTrackDistance(double distance) {
+  static String formatSpeed(int speed) {
+    return "$speed km/h";
+  }
+
+  static String formatDistance(double distance) {
     String distanceWithTwoDecimals = distance.toStringAsFixed(2);
     return distance >= 1000
         ? "$distanceWithTwoDecimals km"
         : "$distanceWithTwoDecimals met";
   }
 
-  static String formatTrackTimer(int millis) {
+  static String formatTimer(int millis) {
     final NumberFormat nf = NumberFormat("00");
 
     int hours = millis ~/ 3600000;
