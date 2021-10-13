@@ -1,3 +1,6 @@
 enum TrackStatus {
-  standby, prepare, active, complete
+  standby,
+  prepare,
+  active,
+  complete,
 }

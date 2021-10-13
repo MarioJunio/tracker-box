@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:flutter_modular/flutter_modular.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:mobx/mobx.dart';
 import 'package:tracker_box/app/modules/track/track-pages/createLaunch.dart';
 import 'package:tracker_box/app/modules/track/track-pages/trackInPrepare.dart';
 import 'package:tracker_box/app/modules/track/track-pages/trackInProgress.dart';
+import 'package:tracker_box/app/modules/track/track_module.dart';
 import 'package:tracker_box/app/modules/track/widgets/startEngineButton.dart';
 import 'package:tracker_box/app/shared/preferences/appPrefs.dart';
+import 'package:tracker_box/app/shared/widgets/alert/dialogBox.dart';
 
 import 'track_controller.dart';
 
@@ -16,37 +20,68 @@ class TrackPage extends StatefulWidget {
 
 class _TrackPageState extends ModularState<TrackPage, TrackController> {
   @override
+  void initState() {
+    super.initState();
+
+    autorun((_) {
+      if (controller.errorOnTrackingStart) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return CustomDialogBox(
+              title: "Tracking não iniciado",
+              message:
+                  "Não foi possível iniciar o tracking devido a problemas no GPS",
+              onPressButtonOk: () {
+                controller.setErrorOnTrackingStart(false);
+                Navigator.pop(context);
+              },
+            );
+          },
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    controller.stopTracking();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Crie seu Track"),
+        title: Observer(
+          builder: (_) => Text(controller.getPageTitle),
+        ),
+        actions: _buildAppBarActions(),
       ),
       body: _buildBody(),
       resizeToAvoidBottomInset: false,
     );
   }
 
-  Widget _buildBody() {
-    return Container(
-      padding: EdgeInsets.all(16),
-      child: Center(
-        child: _buildFormSetupStacked(),
-      ),
-    );
+  List<Widget> _buildAppBarActions() {
+    return [
+      _buildBarButtonMap(),
+    ];
   }
 
-  Widget _buildFormSetup() {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(child: _buildTrackView()),
-        SizedBox(height: 60),
-        StartEngineButton(
-          width: MediaQuery.of(context).size.height * 0.20,
-          height: MediaQuery.of(context).size.height * 0.20,
-        ),
-        SizedBox(height: 10),
-      ],
+  Widget _buildBarButtonMap() => Observer(
+      builder: (_) => !controller.trackInProgress
+          ? IconButton(
+              onPressed: () {
+                Modular.to.pushNamed(TrackModule.MAP_MODULE_ROUTE);
+              },
+              icon: FaIcon(FontAwesomeIcons.mapMarkedAlt),
+            )
+          : Container());
+
+  Widget _buildBody() {
+    return Center(
+      child: _buildFormSetupStacked(),
     );
   }
 
@@ -56,19 +91,20 @@ class _TrackPageState extends ModularState<TrackPage, TrackController> {
         Positioned(
           child: Align(
             alignment: FractionalOffset.topCenter,
-            child: Container(
-              child: _buildTrackView(),
-            ),
+            child: _buildTrackView(),
           ),
         ),
         Positioned(
           child: Align(
             alignment: FractionalOffset.bottomCenter,
-            child: StartEngineButton(
-              width: MediaQuery.of(context).size.height *
-                  AppPreferences.TRACK_TOGGLE_BUTTON_HEIGHT,
-              height: MediaQuery.of(context).size.height *
-                  AppPreferences.TRACK_TOGGLE_BUTTON_HEIGHT,
+            child: Padding(
+              padding: EdgeInsets.only(bottom: 16),
+              child: StartEngineButton(
+                width: MediaQuery.of(context).size.height *
+                    AppPreferences.TRACK_TOGGLE_BUTTON_HEIGHT,
+                height: MediaQuery.of(context).size.height *
+                    AppPreferences.TRACK_TOGGLE_BUTTON_HEIGHT,
+              ),
             ),
           ),
         ),
@@ -78,9 +114,17 @@ class _TrackPageState extends ModularState<TrackPage, TrackController> {
 
   Widget _buildTrackView() => Observer(
         builder: (_) {
-          if (controller.track.isStandby) return CreateLaunchPage();
+          if (controller.track.isStandby)
+            return Padding(
+              padding: const EdgeInsets.all(16),
+              child: CreateTrackPage(),
+            );
 
-          if (controller.track.isPrepare) return TrackInPreparePage();
+          if (controller.track.isPrepare)
+            return Padding(
+              padding: const EdgeInsets.all(16),
+              child: TrackInPreparePage(),
+            );
 
           return TrackInProgressPage();
         },

@@ -10,10 +10,10 @@ part 'track.g.dart';
 class Track = _TrackBase with _$Track;
 
 abstract class _TrackBase with Store {
-  int id;
+  late int id;
 
   @observable
-  int startSpeed;
+  int startSpeed = 0;
 
   @observable
   int speed = 0;
@@ -27,7 +27,7 @@ abstract class _TrackBase with Store {
   @observable
   int timer = 0;
 
-  List<Coordinate> coordinates = new List();
+  List<Coordinate> coordinates = [];
 
   // transient
   @observable
@@ -42,9 +42,6 @@ abstract class _TrackBase with Store {
     this.reset();
   }
 
-  @observable
-  bool inProgress = false;
-
   @action
   reset() {
     startSpeed = 0;
@@ -53,12 +50,12 @@ abstract class _TrackBase with Store {
     distanceIntegral = 0;
     timer = 0;
     canStartTimer = true;
-    coordinates = new List();
+    coordinates = [];
   }
 
   @action
   setStartSpeed(int speed) {
-    if ((this?.startSpeed ?? 0) == 0) {
+    if (this.startSpeed == 0) {
       this.startSpeed = speed;
     }
   }
@@ -79,11 +76,6 @@ abstract class _TrackBase with Store {
   }
 
   @action
-  setInProgress(bool inProgress) {
-    this.inProgress = inProgress;
-  }
-
-  @action
   setTrackStatus(TrackStatus status) {
     this.status = status;
   }
@@ -94,11 +86,12 @@ abstract class _TrackBase with Store {
     // a distancia poderia calculada para ser acumulada
     if (coordinates.length > 1) {
       final int length = coordinates.length;
-      final double distanceBetween = await ILocation.distanceBetween(
+      final double distanceBetween = ILocation.distanceBetween(
           coordinates[length - 2], coordinates[length - 1]);
 
-      if (_canAcumulateDistance(distanceBetween))
-        this.distance += distanceBetween > 0 ? distanceBetween : 0;
+      if (_canAcumulateDistance(distanceBetween)) {
+        this.distance += distanceBetween;
+      }
     }
   }
 
@@ -144,6 +137,9 @@ abstract class _TrackBase with Store {
 
   @computed
   bool get isComplete => status == TrackStatus.complete;
+
+  List<Coordinate> get getTraceBeginAndEndCoordinates =>
+      coordinates.isNotEmpty ? [coordinates.first, coordinates.last] : [];
 
   bool _canAcumulateDistance(double distanceBetween) =>
       this.speed > 1 && distanceBetween > 1;

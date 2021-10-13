@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:mobx/mobx.dart';
+import 'package:tracker_box/app/core/model/coordinate.dart';
 import 'package:tracker_box/app/core/model/launchType.dart';
 import 'package:tracker_box/app/modules/track/track_controller.dart';
+import 'package:tracker_box/app/shared/utils/map_utils.dart';
 import 'package:tracker_box/app/shared/widgets/gauge/gauge.dart';
 
 class TrackInProgressPage extends StatefulWidget {
@@ -14,26 +18,94 @@ class TrackInProgressPage extends StatefulWidget {
 class _TrackInProgressPageState extends State<TrackInProgressPage> {
   final TrackController controller = Modular.get<TrackController>();
 
+  Map<MarkerId, Marker> markers = {};
+  Map<PolylineId, Polyline> polylines = {};
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      child: SingleChildScrollView(
-        scrollDirection: Axis.vertical,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            _buildStartSpeedIndicator(),
-            _mainGap,
-            _mainIndicator,
-            _mainGap,
-            _buildSecondaryIndicators,
-          ],
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          _buildStartSpeedIndicator(),
+          _mainIndicator,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: _buildSecondaryIndicators,
+          ),
+          _mainGap,
+          _buildMapViewTracker,
+        ],
       ),
     );
   }
 
-  Widget get _mainGap => SizedBox(height: 16);
+  Widget get _buildMapViewTracker => Observer(
+      builder: (_) => controller.track.isComplete
+          ? Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Card(
+                elevation: 8,
+                child: Container(
+                  height: 200,
+                  child: GoogleMap(
+                    onMapCreated: _onMapCreated,
+                    myLocationButtonEnabled: false,
+                    initialCameraPosition: CameraPosition(
+                      target: LatLng(-23.714468, -46.9162349),
+                      zoom: 6,
+                    ),
+                    zoomControlsEnabled: false,
+                    markers: Set<Marker>.of(markers.values),
+                    polylines: Set<Polyline>.of(polylines.values),
+                  ),
+                ),
+              ),
+            )
+          : Container());
+
+  void _onMapCreated(GoogleMapController mapController) {
+    controller.setGoogleMapController(mapController);
+
+    if (controller.track.isComplete) {
+      final List<Coordinate> trackMarkers =
+          controller.track.getTraceBeginAndEndCoordinates;
+
+      final originPosition =
+          LatLng(trackMarkers[0].latitude, trackMarkers[0].longitude);
+
+      final destinatePosition =
+          LatLng(trackMarkers[1].latitude, trackMarkers[1].longitude);
+
+      _addMarker(
+        "start",
+        originPosition,
+        BitmapDescriptor.defaultMarker,
+      );
+
+      _addMarker(
+        "end",
+        destinatePosition,
+        BitmapDescriptor.defaultMarkerWithHue(50),
+      );
+
+      _addPolyLine();
+
+      mapController.animateCamera(CameraUpdate.newLatLngZoom(
+        LatLng(trackMarkers[0].latitude, trackMarkers[0].longitude),
+        16.5,
+      ));
+
+      setState(() {});
+    }
+  }
+
+  Widget get _mainGap => SizedBox(height: 8);
 
   Widget get _mainIndicator {
     return Observer(
@@ -68,8 +140,9 @@ class _TrackInProgressPageState extends State<TrackInProgressPage> {
   Widget _buildMainIndicator(String title, double currentValue, double maxValue,
       String formattedValue) {
     return Card(
+      elevation: 4,
       child: Container(
-        padding: EdgeInsets.only(top: 16),
+        padding: EdgeInsets.only(top: 8),
         child: Column(
           children: <Widget>[
             Text(
@@ -96,7 +169,7 @@ class _TrackInProgressPageState extends State<TrackInProgressPage> {
                     child: Text(
                       formattedValue,
                       style: TextStyle(
-                          fontSize: 20,
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: Theme.of(context).primaryColor),
                     ),
@@ -136,49 +209,44 @@ class _TrackInProgressPageState extends State<TrackInProgressPage> {
 
   Widget _buildStartSpeedIndicator() => Observer(
         builder: (_) {
-          return (controller.track.startSpeed ?? 0) != controller.track.speed
-              ? Card(
-                  child: Container(
-                    padding: EdgeInsets.all(16),
-                    child: Column(
-                      children: <Widget>[
-                        Text(
-                          "Velocidade de início",
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xff00897b),
+          return (controller.track.startSpeed) != controller.track.speed
+              ? Container(
+                  margin: EdgeInsets.only(top: 16),
+                  child: Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Column(
+                        children: <Widget>[
+                          Text(
+                            "Velocidade de início",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xff00897b),
+                            ),
                           ),
-                        ),
-                        SizedBox(height: 16),
-                        Stack(
-                          children: <Widget>[
-                            Align(
-                              alignment: Alignment.centerLeft,
-                              child: FaIcon(
-                                FontAwesomeIcons.tachometerAlt,
-                                size: 26,
-                                color: Theme.of(context).primaryColor,
+                          SizedBox(height: 16),
+                          Stack(
+                            children: <Widget>[
+                              Align(
+                                alignment: Alignment.center,
+                                child: Observer(
+                                  builder: (_) {
+                                    return Text(
+                                      "${controller.track.startSpeed} km/h",
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: Theme.of(context).primaryColor,
+                                      ),
+                                    );
+                                  },
+                                ),
                               ),
-                            ),
-                            Align(
-                              alignment: Alignment.center,
-                              child: Observer(
-                                builder: (_) {
-                                  return Text(
-                                    "${controller.track.startSpeed ?? 0} km/h",
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                      color: Theme.of(context).primaryColor,
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 )
@@ -217,7 +285,7 @@ class _TrackInProgressPageState extends State<TrackInProgressPage> {
                         return Text(
                           "${controller.track.speedFormatted}",
                           style: TextStyle(
-                            fontSize: 20,
+                            fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: Theme.of(context).primaryColor,
                           ),
@@ -263,7 +331,7 @@ class _TrackInProgressPageState extends State<TrackInProgressPage> {
                         return Text(
                           "${controller.track.distanceFormatted}",
                           style: TextStyle(
-                            fontSize: 20,
+                            fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: Theme.of(context).primaryColor,
                           ),
@@ -309,7 +377,7 @@ class _TrackInProgressPageState extends State<TrackInProgressPage> {
                         return Text(
                           "${controller.track.timerFormatted}",
                           style: TextStyle(
-                            fontSize: 20,
+                            fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: Theme.of(context).primaryColor,
                           ),
@@ -369,4 +437,23 @@ class _TrackInProgressPageState extends State<TrackInProgressPage> {
           ),
         ),
       );
+
+  _addMarker(String id, LatLng position, BitmapDescriptor descriptor) {
+    MarkerId markerId = MarkerId(id);
+
+    markers.putIfAbsent(
+      markerId,
+      () => MapUtils.createMarker(markerId, position, descriptor),
+    );
+  }
+
+  _addPolyLine() {
+    PolylineId id = PolylineId("poly");
+
+    polylines.putIfAbsent(
+      id,
+      () => MapUtils.createPolyline(
+          id, Colors.blue.shade600, controller.track.coordinates),
+    );
+  }
 }

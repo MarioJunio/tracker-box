@@ -25,6 +25,8 @@ class _TimerPageState extends State<TimerPage> {
 
   @override
   void initState() {
+    super.initState();
+
     items
       ..add(
         RadioModel(true, RadioModelLocation.first, "Segundos", onTap: () {
@@ -39,14 +41,13 @@ class _TimerPageState extends State<TimerPage> {
 
     _focusNode.addListener(() {
       controller.launch.selectLaunchType(LaunchType.time);
-      controller.launch.setLaunchUnitType(LaunchUnitType.seconds);
 
       setState(() {
         controller.setActive(_focusNode.hasFocus);
       });
     });
 
-    super.initState();
+    controller.launch.setLaunchUnitType(LaunchUnitType.seconds);
   }
 
   @override

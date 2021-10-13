@@ -6,10 +6,14 @@ class TrackFormatter {
   }
 
   static String formatDistance(double distance) {
-    String distanceWithTwoDecimals = distance.toStringAsFixed(2);
-    return distance >= 1000
-        ? "$distanceWithTwoDecimals km"
-        : "$distanceWithTwoDecimals met";
+    String unit = "metros";
+
+    if (distance >= 1000) {
+      distance = distance / 1000;
+      unit = "km";
+    }
+
+    return "${distance.toStringAsFixed(0)} $unit";
   }
 
   static String formatTimer(int millis) {

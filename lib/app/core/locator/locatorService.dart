@@ -3,13 +3,17 @@ import 'dart:async';
 import 'package:location/location.dart';
 import 'package:tracker_box/app/core/location/location.dart';
 
-class LocatorService extends ILocation {
+class LocationService extends ILocation {
   final Location _location = new Location();
-  
-  StreamSubscription _positionStream;
 
-  LocatorService() {
-    _location.changeSettings(accuracy: LocationAccuracy.navigation, interval: 1, distanceFilter: 0);
+  StreamSubscription? _positionStream;
+
+  LocationService() {
+    _location.changeSettings(
+      accuracy: LocationAccuracy.navigation,
+      interval: 1,
+      distanceFilter: 0,
+    );
   }
 
   Future<bool> canStart() async {
@@ -21,7 +25,7 @@ class LocatorService extends ILocation {
       if (!_serviceEnabled) {
         return false;
       }
-}
+    }
 
     PermissionStatus _permissionGranted = await _location.hasPermission();
 
@@ -36,8 +40,7 @@ class LocatorService extends ILocation {
     return true;
   }
 
-  @override
-  listenForPosition(Function onPositionChanged) {
+  listenForPosition(Function(LocationData) onPositionChanged) {
     _positionStream = _location.onLocationChanged.listen(onPositionChanged);
   }
 
@@ -45,5 +48,4 @@ class LocatorService extends ILocation {
   cancelListener() {
     _positionStream?.cancel();
   }
-
 }

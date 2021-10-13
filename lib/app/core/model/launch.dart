@@ -7,13 +7,13 @@ part 'launch.g.dart';
 class Launch = _LaunchBase with _$Launch;
 
 abstract class _LaunchBase with Store {
-  int id;
+  int id = 0;
 
   @observable
-  LaunchType type;
+  LaunchType type = LaunchType.speed;
 
   @observable
-  LaunchUnitType unitType;
+  LaunchUnitType unitType = LaunchUnitType.km_h;
 
   @observable
   int value = 0;
@@ -44,8 +44,7 @@ abstract class _LaunchBase with Store {
   String get valueFormatted => "$value $launchTypeDescription";
 
   @computed
-  int get valueInMeters =>
-      unitType == LaunchUnitType.meter ? value * 1000 : value;
+  int get valueInMeters => unitType == LaunchUnitType.km ? value * 1000 : value;
 
   @computed
   int get valueInMilliseconds =>

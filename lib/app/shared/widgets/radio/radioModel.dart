@@ -7,5 +7,6 @@ class RadioModel {
 
   bool isSelected;
 
-  RadioModel(this.isSelected, this.location, this.buttonText, {this.onTap});
+  RadioModel(this.isSelected, this.location, this.buttonText,
+      {required this.onTap});
 }

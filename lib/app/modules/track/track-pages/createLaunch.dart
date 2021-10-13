@@ -9,12 +9,12 @@ import 'package:tracker_box/app/shared/utils/keyboard_utils.dart';
 import 'package:tracker_box/app/shared/widgets/radio/radioGroup.dart';
 import 'package:tracker_box/app/shared/widgets/radio/radioModel.dart';
 
-class CreateLaunchPage extends StatefulWidget {
+class CreateTrackPage extends StatefulWidget {
   @override
-  _CreateLaunchPageState createState() => _CreateLaunchPageState();
+  _CreateTrackPageState createState() => _CreateTrackPageState();
 }
 
-class _CreateLaunchPageState extends State<CreateLaunchPage> {
+class _CreateTrackPageState extends State<CreateTrackPage> {
   final TrackController controller = Modular.get<TrackController>();
   final PageController _pageController = PageController();
 

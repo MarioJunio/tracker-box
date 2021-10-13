@@ -21,7 +21,7 @@ class _DistancePageState extends State<DistancePage> {
       TextEditingController();
   final FocusNode _focusNode = FocusNode();
 
-  List<RadioModel> items = new List();
+  List<RadioModel> items = [];
 
   @override
   void initState() {

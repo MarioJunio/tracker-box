@@ -10,7 +10,7 @@ class RadioItem extends StatefulWidget {
   RadioItem(
     this._model, {
     this.active = false,
-    this.hasRightBorder,
+    this.hasRightBorder = false,
   });
 
   @override
@@ -18,7 +18,7 @@ class RadioItem extends StatefulWidget {
 }
 
 class _RadioItemState extends State<RadioItem> {
-  var context;
+  late var context;
 
   @override
   Widget build(BuildContext context) {
@@ -92,15 +92,13 @@ class _RadioItemState extends State<RadioItem> {
   }
 
   Color get _middleBorderColor {
-
     if (widget.hasRightBorder) {
-
       if (widget.active) {
         return Theme.of(context).primaryColor;
       } else {
         return ColorUtils.lightGrey;
       }
-    } 
+    }
 
     return Theme.of(context).primaryColor;
   }

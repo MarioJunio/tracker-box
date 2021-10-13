@@ -1,14 +1,16 @@
 import 'dart:async';
 
+import 'package:flutter_modular/flutter_modular.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:mobx/mobx.dart';
 import 'package:tracker_box/app/core/geolocator/trackerLocator.dart';
-import 'package:tracker_box/app/core/location/location.dart';
 import 'package:tracker_box/app/core/model/coordinate.dart';
 import 'package:tracker_box/app/core/model/launch.dart';
 import 'package:tracker_box/app/core/model/launchType.dart';
 import 'package:tracker_box/app/core/model/track.dart';
 import 'package:tracker_box/app/core/model/trackStatus.dart';
+import 'package:tracker_box/app/modules/track/track_module.dart';
 import 'package:tracker_box/app/shared/preferences/appPrefs.dart';
 
 part 'track_controller.g.dart';
@@ -16,14 +18,14 @@ part 'track_controller.g.dart';
 class TrackController = _TrackControllerBase with _$TrackController;
 
 abstract class _TrackControllerBase with Store {
-  final ILocation trackerLocator = new TrackerLocator();
-
+  final TrackerLocator trackerLocator = new TrackerLocator();
   final TrackerLocator trackerCalibrate = new TrackerLocator();
+  GoogleMapController? mapController;
 
-  Timer _countTimer, _countDownTimer;
+  Timer? _countTimer, _countDownTimer;
 
   @observable
-  Launch launch;
+  Launch launch = new Launch();
 
   @observable
   Track track = new Track();
@@ -33,6 +35,14 @@ abstract class _TrackControllerBase with Store {
 
   @observable
   int prepareCountDown = AppPreferences.TRACK_START_COUNT_DOWN;
+
+  @observable
+  bool errorOnTrackingStart = false;
+
+  @action
+  setErrorOnTrackingStart(bool errorOnTrackingStart) {
+    this.errorOnTrackingStart = errorOnTrackingStart;
+  }
 
   _TrackControllerBase() {
     resetLaunch(LaunchType.speed);
@@ -47,12 +57,20 @@ abstract class _TrackControllerBase with Store {
 
   @action
   publishTrack() {
-    //TODO: salva track no device local ou sincroniza com a nuvem
+    //TODO: salva track no device local caso não haja conexão com a internet ou sincroniza com a nuvem
+    //TODO: buscar todos os track do meu usuário
+    //TODO: buscar todos os tracks dos outros usuários no raio definido
+    final List<Coordinate> trackCoordinates = track.coordinates;
 
     resetLaunch(LaunchType.speed);
 
     track.reset();
     track.setTrackStatus(TrackStatus.standby);
+
+    Modular.to.pushNamed(
+      TrackModule.MAP_MODULE_ROUTE,
+      arguments: trackCoordinates,
+    );
   }
 
   @action
@@ -69,13 +87,34 @@ abstract class _TrackControllerBase with Store {
       _prepareTracking();
     else if (track.isPrepare)
       _cancelTracking();
-    else if (track.isActive) _stopTracking();
+    else if (track.isActive) stopTracking();
   }
 
   @action
   setActive(bool active) {
     this.active = active;
   }
+
+  @computed
+  String get getPageTitle {
+    switch (track.status) {
+      case TrackStatus.complete:
+        return "Track finalizado";
+      case TrackStatus.prepare:
+        return "Preparando seu track...";
+      case TrackStatus.active:
+        return "Track em progresso...";
+      default:
+        return "Monte sua track";
+    }
+  }
+
+  @computed
+  bool get trackInProgress => [
+        TrackStatus.prepare,
+        TrackStatus.active,
+        TrackStatus.complete,
+      ].contains(track.status);
 
   @action
   _prepareTracking() {
@@ -105,17 +144,19 @@ abstract class _TrackControllerBase with Store {
 
     // inicia listener para obter a posição mais atual
     trackerLocator.listenForPosition(_listenForPosition).then((value) {
+      print("M=listenForPosition, value=$value");
+
       if (value) {
         track.setTrackStatus(TrackStatus.active);
       } else {
-        //TODO: Exibir mensagem indicando que não poderá iniciar o tracking
-        print("=> Track não inciado!");
+        setErrorOnTrackingStart(true);
+        _cancelTracking();
       }
     });
   }
 
   @action
-  _stopTracking() {
+  stopTracking() {
     // pausa o listener de posições
     trackerLocator.cancelListener();
 
@@ -123,6 +164,10 @@ abstract class _TrackControllerBase with Store {
     _stopTimer();
 
     track.setTrackStatus(TrackStatus.complete);
+  }
+
+  void setGoogleMapController(GoogleMapController googleMapController) {
+    this.mapController = googleMapController;
   }
 
   @action
@@ -149,12 +194,13 @@ abstract class _TrackControllerBase with Store {
     // não aceita velocidade negativa, acontece se inicia o GPS
     track.setSpeed(tmpSpeed < 0 ? 0 : tmpSpeed);
 
-    // calcula distancia
+    // add coordenada a lista
     track.coordinates.add(new Coordinate(
       latitude: position.latitude,
       longitude: position.longitude,
     ));
 
+    // calcula distancia
     track.calculateDistance();
 
     // checa se atingiu algum limite definido
@@ -171,7 +217,7 @@ abstract class _TrackControllerBase with Store {
   _startTimer() {
     track.canStartTimer = false;
 
-    if (!(_countTimer?.isActive ?? false))
+    if (!(_countTimer?.isActive ?? false)) {
       _countTimer = Timer.periodic(
           Duration(milliseconds: AppPreferences.TRACK_TIMER_DELAY_MILLI),
           (timer) {
@@ -181,6 +227,7 @@ abstract class _TrackControllerBase with Store {
           _timeStopCondition();
         }
       });
+    }
   }
 
   _stopTimer() {
@@ -200,7 +247,7 @@ abstract class _TrackControllerBase with Store {
     if (track.speed >= launch.value) {
       track.setSpeed(launch.value);
 
-      _stopTracking();
+      stopTracking();
     }
   }
 
@@ -209,7 +256,7 @@ abstract class _TrackControllerBase with Store {
     if (track.distance >= launch.valueInMeters) {
       track.setDistance(launch.value.toDouble());
 
-      _stopTracking();
+      stopTracking();
     }
   }
 
@@ -218,7 +265,7 @@ abstract class _TrackControllerBase with Store {
     if (track.timer >= launch.valueInMilliseconds) {
       track.setTimer(launch.valueInMilliseconds);
 
-      _stopTracking();
+      stopTracking();
     }
   }
 }

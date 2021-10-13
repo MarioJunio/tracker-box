@@ -1,20 +1,21 @@
-import 'package:flutter/material.dart';
-import 'package:charts_flutter/flutter.dart' as charts;
 import 'dart:math';
 
+import 'package:charts_flutter/flutter.dart' as charts;
+import 'package:flutter/material.dart';
+
 class GaugeChart extends StatelessWidget {
-  final List<charts.Series> seriesList;
+  final List<charts.Series<GaugeSegment, String>> seriesList;
   final bool animate;
   final int width;
 
-  GaugeChart(this.seriesList, {this.width = 20, this.animate});
+  GaugeChart(this.seriesList, {this.width = 20, required this.animate});
 
   factory GaugeChart.fromValue({
-    @required double value,
-    @required double max,
-    @required int width,
-    @required Color color,
-    bool animate,
+    required double value,
+    required double max,
+    required int width,
+    required Color color,
+    required bool animate,
   }) {
     return GaugeChart(
       _createDataFromValue(value, max, color),
@@ -25,7 +26,7 @@ class GaugeChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return charts.PieChart(
+    return charts.PieChart<Object>(
       seriesList,
       animate: animate,
       // Configure the width of the pie slices to 30px. The remaining space in
@@ -35,7 +36,10 @@ class GaugeChart extends StatelessWidget {
         arcWidth: this.width,
         startAngle: 3 / 5 * pi,
         arcLength: 9 / 5 * pi,
-        //arcRendererDecorators: [charts.ArcLabelDecorator(labelPosition: charts.ArcLabelPosition.outside)],
+        /*arcRendererDecorators: [
+          charts.ArcLabelDecorator(
+              labelPosition: charts.ArcLabelPosition.outside)
+        ],*/
       ),
     );
   }
@@ -59,7 +63,7 @@ class GaugeChart extends StatelessWidget {
         colorFn: (GaugeSegment segment, _) => segment.color,
         // Set a label accessor to control the text of the arc label.
         labelAccessorFn: (GaugeSegment segment, _) =>
-            segment.segment == 'Main' ? '${segment.value}' : null,
+            segment.segment == 'Main' ? '${segment.value}' : "",
         data: data,
       )
     ];

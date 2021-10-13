@@ -50,7 +50,7 @@ class _SpeedPageState extends State<SpeedPage> {
                     labelValue,
                     style: Theme.of(context)
                         .textTheme
-                        .subtitle2
+                        .subtitle2!
                         .copyWith(fontWeight: FontWeight.w800),
                   ),
                 ],
