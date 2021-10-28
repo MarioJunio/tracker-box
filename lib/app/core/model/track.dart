@@ -120,7 +120,21 @@ abstract class _TrackBase with Store {
   String get timerFormatted => TrackFormatter.formatTimer(timer);
 
   @computed
+  String get timerFormattedWithoutUnit =>
+      TrackFormatter.formatTimer(timer, showLabel: false);
+
+  @computed
+  String get timerUnit => TrackFormatter.timerUnit(timer);
+
+  @computed
   String get distanceFormatted => TrackFormatter.formatDistance(distance);
+
+  @computed
+  String get distanceFormattedWithoutUnit =>
+      TrackFormatter.formatDistance(distance, showLabel: false);
+
+  @computed
+  String get distanceUnit => TrackFormatter.distanceUnit(distance);
 
   @computed
   bool get calibrated =>

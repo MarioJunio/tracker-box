@@ -210,8 +210,6 @@ abstract class _TrackControllerBase with Store {
   @action
   _listenForCalibrate(Position position) {
     track.accuracy = position.accuracy;
-
-    // print("Calibrando: ${track.accuracy}");
   }
 
   _startTimer() {

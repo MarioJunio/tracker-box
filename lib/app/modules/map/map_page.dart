@@ -6,7 +6,9 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:tracker_box/app/core/model/coordinate.dart';
 import 'package:tracker_box/app/modules/map/map_controller.dart';
-import 'package:tracker_box/app/modules/track/track_module.dart';
+import 'package:tracker_box/app/shared/utils/map_utils.dart';
+import 'package:tracker_box/app/shared/widgets/alert/dialogBox.dart';
+import 'package:tracker_box/app/shared/widgets/alert/dialogTypes.dart';
 
 import 'map_controller.dart';
 
@@ -31,6 +33,12 @@ class MapPageState extends ModularState<MapPage, MapController> {
     super.initState();
     controller.setCoordinates(widget.coordinates);
     controller.setOnUpdateCurrentPosition(_onUpdateCurrentPosition);
+
+    MapUtils.drawUserMarkerDot(100, 100, Colors.orangeAccent).then(
+      (value) => controller.setCustomUserMarker(
+        BitmapDescriptor.fromBytes(value),
+      ),
+    );
   }
 
   @override
@@ -38,7 +46,11 @@ class MapPageState extends ModularState<MapPage, MapController> {
     return Scaffold(
         appBar: AppBar(
           title: Text(widget.title ?? ""),
-          actions: _buildBarActions(),
+          actions: [
+            _getTrackButtons,
+            _getDiscardTrackButton,
+            _getPublishTrackButton,
+          ],
         ),
         body: Observer(builder: (_) {
           return Stack(
@@ -61,16 +73,28 @@ class MapPageState extends ModularState<MapPage, MapController> {
                   children: [
                     Container(
                       margin: EdgeInsets.only(left: 8),
-                      child: _buildIndicator("123", "km/h"),
+                      child: _buildIndicator(
+                          controller.track.speed.toString(), "km/h",
+                          bigFont: true),
                     ),
-                    Container(
-                      margin: EdgeInsets.only(left: 8, top: 16),
-                      child: _buildIndicator("3.5", "seg"),
-                    ),
-                    Container(
-                      margin: EdgeInsets.only(left: 8, top: 16),
-                      child: _buildIndicator("657", "metros"),
-                    ),
+                    controller.showIndicators
+                        ? Container(
+                            margin: EdgeInsets.only(left: 8, top: 8),
+                            child: _buildIndicator(
+                              controller.track.timerFormattedWithoutUnit,
+                              controller.track.timerUnit,
+                            ),
+                          )
+                        : Container(),
+                    controller.showIndicators
+                        ? Container(
+                            margin: EdgeInsets.only(left: 8, top: 16),
+                            child: _buildIndicator(
+                              controller.track.distanceFormattedWithoutUnit,
+                              controller.track.distanceUnit,
+                            ),
+                          )
+                        : Container(),
                   ],
                 ),
               )
@@ -79,20 +103,72 @@ class MapPageState extends ModularState<MapPage, MapController> {
         }));
   }
 
-  List<Widget> _buildBarActions() {
-    return [
-      IconButton(
-        onPressed: () {},
-        icon: FaIcon(
-          FontAwesomeIcons.play,
-        ),
-      )
-    ];
+  Widget get _getTrackButtons => Observer(
+        builder: (_) {
+          IconButton button = IconButton(
+            onPressed: controller.track.calibrated ? _confirmStartTrack : null,
+            icon: FaIcon(FontAwesomeIcons.play),
+          );
+
+          if (controller.track.isActive) {
+            button = IconButton(
+              onPressed: () {
+                controller.stopTracking();
+              },
+              icon: FaIcon(FontAwesomeIcons.stop),
+            );
+          }
+
+          return controller.track.isComplete ? Container() : button;
+        },
+      );
+
+  Widget get _getPublishTrackButton => Observer(
+        builder: (_) => controller.track.isComplete
+            ? IconButton(
+                onPressed: () {
+                  controller.publishTrack();
+                },
+                icon: FaIcon(FontAwesomeIcons.check),
+              )
+            : Container(),
+      );
+
+  Widget get _getDiscardTrackButton => Observer(
+        builder: (_) => controller.track.isComplete
+            ? IconButton(
+                onPressed: () {
+                  controller.discardTrack();
+                },
+                icon: FaIcon(FontAwesomeIcons.times),
+              )
+            : Container(),
+      );
+
+  void _confirmStartTrack() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return CustomDialogBox(
+          type: DialogType.CONFIRMATION,
+          title: "Iniciar um novo track?",
+          textPositiveButton: "Sim",
+          onPressPositiveButton: () {
+            controller.startTracking();
+            Navigator.pop(context);
+          },
+          textNegativeButton: "Cancelar",
+          onPressNegativeButton: () {
+            Navigator.pop(context);
+          },
+        );
+      },
+    );
   }
 
-  Widget _buildIndicator(String value, String label) {
+  Widget _buildIndicator(String value, String label, {bool bigFont = false}) {
     return Container(
-      padding: EdgeInsets.all(12),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white.withAlpha(150),
         border: Border.all(
@@ -108,7 +184,7 @@ class MapPageState extends ModularState<MapPage, MapController> {
             value,
             style: TextStyle(
               color: Theme.of(context).primaryColor,
-              fontSize: 22,
+              fontSize: bigFont ? 28 : 22,
               fontWeight: FontWeight.w700,
             ),
           ),

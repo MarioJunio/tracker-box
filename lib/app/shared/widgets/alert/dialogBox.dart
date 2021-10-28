@@ -1,19 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:tracker_box/app/shared/utils/constants.dart';
+import 'package:tracker_box/app/shared/widgets/alert/dialogTypes.dart';
 
 class CustomDialogBox extends StatefulWidget {
-  final String title;
-  final String message;
-  final String textButtonOk;
-  final Function onPressButtonOk;
+  final DialogType? type;
+  final String? title;
+  final String? message;
+  final String textPositiveButton;
+  final Function? onPressPositiveButton;
+  final String textNegativeButton;
+  final Function? onPressNegativeButton;
 
   const CustomDialogBox({
-    this.title = "Title",
-    this.message =
-        "Qui ex cupidatat pariatur magna non eu officia tempor ipsum ex. Eu excepteur commodo commodo est incididunt excepteur eu mollit eu cillum adipisicing. Irure voluptate pariatur in ad duis cillum minim Lorem laboris labore ex. Irure deserunt nisi commodo dolore eu minim deserunt enim duis sit dolore enim cillum id. Laborum officia labore cupidatat proident eiusmod amet fugiat in aute Lorem. Mollit reprehenderit eiusmod nisi aliquip adipisicing tempor. Cupidatat nisi sint voluptate enim aute consectetur.",
-    this.textButtonOk = "OK",
-    required this.onPressButtonOk,
+    @required this.type,
+    @required this.title,
+    this.message,
+    this.textPositiveButton = "Ok",
+    this.onPressPositiveButton,
+    this.textNegativeButton = "Cancelar",
+    this.onPressNegativeButton,
   });
 
   @override
@@ -53,14 +59,35 @@ class _CustomDialogBoxState extends State<CustomDialogBox> {
           borderRadius: BorderRadius.all(
             Radius.circular(Constants.avatarRadius),
           ),
-          child: FaIcon(
-            FontAwesomeIcons.exclamationCircle,
-            size: 80,
-            color: Colors.redAccent,
-          ),
+          child: _getIcon(),
         ),
       ),
     );
+  }
+
+  Widget _getIcon() {
+    switch (widget.type) {
+      case DialogType.ERROR:
+        return FaIcon(
+          FontAwesomeIcons.exclamationCircle,
+          size: 80,
+          color: Colors.redAccent,
+        );
+
+      case DialogType.CONFIRMATION:
+        return FaIcon(
+          FontAwesomeIcons.question,
+          size: 60,
+          color: Colors.blueAccent,
+        );
+
+      default:
+        return FaIcon(
+          FontAwesomeIcons.info,
+          size: 80,
+          color: Colors.amberAccent,
+        );
+    }
   }
 
   _body(BuildContext context) {
@@ -83,28 +110,52 @@ class _CustomDialogBoxState extends State<CustomDialogBox> {
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           Text(
-            this.widget.title,
+            this.widget.title ?? "",
             style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
           ),
           SizedBox(
             height: 15,
           ),
-          Text(
-            this.widget.message,
-            style: TextStyle(fontSize: 14),
-            textAlign: TextAlign.center,
-          ),
-          SizedBox(
-            height: 22,
-          ),
-          Align(
-            alignment: Alignment.bottomRight,
-            child: TextButton(
-                onPressed: () => widget.onPressButtonOk(),
-                child: Text(
-                  this.widget.textButtonOk,
-                  style: TextStyle(fontSize: 18),
-                )),
+          widget.message != null
+              ? Text(
+                  this.widget.message ?? "",
+                  style: TextStyle(fontSize: 14),
+                  textAlign: TextAlign.center,
+                )
+              : Container(),
+          widget.message != null
+              ? SizedBox(
+                  height: 22,
+                )
+              : Container(),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Align(
+                alignment: Alignment.bottomLeft,
+                child: TextButton(
+                  onPressed: () => widget.onPressPositiveButton != null
+                      ? widget.onPressNegativeButton!()
+                      : null,
+                  child: Text(
+                    this.widget.textNegativeButton,
+                    style: TextStyle(fontSize: 18),
+                  ),
+                ),
+              ),
+              Align(
+                alignment: Alignment.bottomRight,
+                child: TextButton(
+                  onPressed: () => widget.onPressPositiveButton != null
+                      ? widget.onPressPositiveButton!()
+                      : null,
+                  child: Text(
+                    this.widget.textPositiveButton,
+                    style: TextStyle(fontSize: 18),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),

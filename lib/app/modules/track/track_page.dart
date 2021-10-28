@@ -10,6 +10,7 @@ import 'package:tracker_box/app/modules/track/track_module.dart';
 import 'package:tracker_box/app/modules/track/widgets/startEngineButton.dart';
 import 'package:tracker_box/app/shared/preferences/appPrefs.dart';
 import 'package:tracker_box/app/shared/widgets/alert/dialogBox.dart';
+import 'package:tracker_box/app/shared/widgets/alert/dialogTypes.dart';
 
 import 'track_controller.dart';
 
@@ -29,10 +30,12 @@ class _TrackPageState extends ModularState<TrackPage, TrackController> {
           context: context,
           builder: (BuildContext context) {
             return CustomDialogBox(
+              type: DialogType.ERROR,
               title: "Tracking não iniciado",
               message:
                   "Não foi possível iniciar o tracking devido a problemas no GPS",
-              onPressButtonOk: () {
+              textPositiveButton: "Voltar",
+              onPressPositiveButton: () {
                 controller.setErrorOnTrackingStart(false);
                 Navigator.pop(context);
               },
