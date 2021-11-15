@@ -157,13 +157,13 @@ abstract class _TrackControllerBase with Store {
 
   @action
   stopTracking() {
+    track.setTrackStatus(TrackStatus.complete);
+
     // pausa o listener de posições
     trackerLocator.cancelListener();
 
     // para o temporizador
     _stopTimer();
-
-    track.setTrackStatus(TrackStatus.complete);
   }
 
   void setGoogleMapController(GoogleMapController googleMapController) {

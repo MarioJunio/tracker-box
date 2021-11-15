@@ -34,7 +34,7 @@ class MapPageState extends ModularState<MapPage, MapController> {
     controller.setCoordinates(widget.coordinates);
     controller.setOnUpdateCurrentPosition(_onUpdateCurrentPosition);
 
-    MapUtils.drawUserMarkerDot(100, 100, Colors.orangeAccent).then(
+    MapUtils.drawUserMarkerDot(60, 60, Colors.blue.shade600).then(
       (value) => controller.setCustomUserMarker(
         BitmapDescriptor.fromBytes(value),
       ),
@@ -47,6 +47,7 @@ class MapPageState extends ModularState<MapPage, MapController> {
         appBar: AppBar(
           title: Text(widget.title ?? ""),
           actions: [
+            _getCentralizeButton,
             _getTrackButtons,
             _getDiscardTrackButton,
             _getPublishTrackButton,
@@ -102,6 +103,18 @@ class MapPageState extends ModularState<MapPage, MapController> {
           );
         }));
   }
+
+  Widget get _getCentralizeButton => Observer(builder: (_) {
+        return IconButton(
+          onPressed: () => controller.setCentralize(!controller.centralize),
+          icon: FaIcon(
+            FontAwesomeIcons.mapMarkerAlt,
+            color: controller.centralize
+                ? Colors.white
+                : Colors.white.withOpacity(0.4),
+          ),
+        );
+      });
 
   Widget get _getTrackButtons => Observer(
         builder: (_) {

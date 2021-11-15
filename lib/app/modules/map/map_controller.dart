@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
@@ -17,13 +16,14 @@ part 'map_controller.g.dart';
 class MapController = _MapStoreBase with _$MapController;
 
 abstract class _MapStoreBase with Store {
+  final PolylineId currentPolylineId = PolylineId("P0");
   final TrackerLocator trackerLocator = new TrackerLocator();
   GoogleMapController? mapController;
 
-  List<Coordinate> coordinates = [];
-
   ObservableMap<MarkerId, Marker> markers = ObservableMap();
   ObservableMap<PolylineId, Polyline> polylines = ObservableMap();
+
+  List<Coordinate> coordinates = [];
 
   BitmapDescriptor? customUserMarker;
 
@@ -34,7 +34,13 @@ abstract class _MapStoreBase with Store {
   @observable
   Track track = new Track();
 
-  PolylineId currentPolylineId = PolylineId("P0");
+  @observable
+  bool centralize = true;
+
+  @action
+  void setCentralize(bool centralize) {
+    this.centralize = centralize;
+  }
 
   @action
   void startCapturePositions() {
@@ -96,7 +102,7 @@ abstract class _MapStoreBase with Store {
   void startTracking() {
     polylines[currentPolylineId] = Polyline(
       polylineId: currentPolylineId,
-      color: Colors.blue.shade600,
+      color: Colors.blue.shade400,
       points: [],
     );
 
@@ -106,6 +112,11 @@ abstract class _MapStoreBase with Store {
 
   @action
   void stopTracking() {
+    track.setTrackStatus(TrackStatus.complete);
+
+    // para o temporizador
+    _stopTimer();
+
     if (track.coordinates.isNotEmpty) {
       final lastCoordinate = track.coordinates.last;
 
@@ -118,14 +129,15 @@ abstract class _MapStoreBase with Store {
         points: points,
       );
 
-      addMarker(
-        "M1",
-        LatLng(lastCoordinate.latitude, lastCoordinate.longitude),
-        BitmapDescriptor.defaultMarker,
-      );
+      MapUtils.drawTrackMarkerDot(60, 60, Colors.blueAccent.shade200)
+          .then((value) {
+        addMarker(
+          "M1",
+          LatLng(lastCoordinate.latitude, lastCoordinate.longitude),
+          BitmapDescriptor.fromBytes(value),
+        );
+      });
     }
-
-    track.setTrackStatus(TrackStatus.complete);
   }
 
   @action
@@ -145,53 +157,53 @@ abstract class _MapStoreBase with Store {
 
     onUpdateCurrentPosition!(position);
 
-    mapController?.animateCamera(CameraUpdate.newLatLngZoom(
-      LatLng(position.latitude, position.longitude),
-      16.5,
-    ));
-
-    if (track.status == TrackStatus.active) {
-      _updateTrackActive(position);
+    if (track.status != TrackStatus.complete && centralize) {
+      mapController?.animateCamera(CameraUpdate.newLatLngZoom(
+          LatLng(position.latitude, position.longitude), 18.5));
+    } else if (track.status == TrackStatus.complete) {
+      MapUtils.fitMapOnTrack(track.coordinates, mapController!);
     }
+
+    _updateTrackActive(position);
   }
 
   void _updateTrackActive(Position position) async {
     // converte velocidade de m/s -> km/h
     final int tmpSpeed = (position.speed * 3.6).truncate();
 
-    // inicia temporizador da track
-    if (track.canStartTimer && tmpSpeed > 0) _startTimer();
-
-    // define velocidade inicial do track
-    track.setStartSpeed(tmpSpeed < 0 ? 0 : tmpSpeed);
-
     // não aceita velocidade negativa, acontece se inicia o GPS
     track.setSpeed(tmpSpeed < 0 ? 0 : tmpSpeed);
 
-    final LatLng latLng = LatLng(position.latitude, position.longitude);
+    if (track.isActive) {
+      // inicia temporizador da track
+      if (track.canStartTimer && tmpSpeed > 0) _startTimer();
 
-    // adiciona polyline para criar a rota
-    polylines[currentPolylineId]!.points.add(latLng);
+      // define velocidade inicial do track
+      track.setStartSpeed(tmpSpeed < 0 ? 0 : tmpSpeed);
 
-    // adiciona bandeira de inicio do track
-    if (track.coordinates.isEmpty) {
-      addMarker(
-        "M0",
-        latLng,
-        BitmapDescriptor.fromBytes(
-          await MapUtils.drawTrackMarkerDot(200, 100, Colors.blueAccent),
-        ),
-      );
+      final LatLng latLng = LatLng(position.latitude, position.longitude);
+
+      // adiciona polyline para criar a rota
+      polylines[currentPolylineId]!.points.add(latLng);
+
+      // adiciona bandeira de inicio do track
+      if (track.coordinates.isEmpty) {
+        addMarker(
+            "M0",
+            latLng,
+            BitmapDescriptor.fromBytes(
+                await MapUtils.drawTrackMarkerDot(60, 60, Colors.blueAccent)));
+      }
+
+      // add coordenada a lista
+      track.coordinates.add(new Coordinate(
+        latitude: position.latitude,
+        longitude: position.longitude,
+      ));
+
+      // calcula distancia
+      track.calculateDistance();
     }
-
-    // add coordenada a lista
-    track.coordinates.add(new Coordinate(
-      latitude: position.latitude,
-      longitude: position.longitude,
-    ));
-
-    // calcula distancia
-    track.calculateDistance();
   }
 
   void _startTimer() {
@@ -205,6 +217,10 @@ abstract class _MapStoreBase with Store {
         },
       );
     }
+  }
+
+  _stopTimer() {
+    _countTimer?.cancel();
   }
 
   List<Coordinate> get getOriginAndDestinateCoordinates {
