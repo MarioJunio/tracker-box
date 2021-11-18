@@ -188,8 +188,8 @@ abstract class _TrackControllerBase with Store {
     // inicia temporizador da track
     if (track.canStartTimer && tmpSpeed > 0) _startTimer();
 
-    // define velocidade inicial
-    track.setStartSpeed(tmpSpeed < 0 ? 0 : tmpSpeed);
+    // define velocidade inicial e máxima
+    track.refreshSpeedDefinitions();
 
     // não aceita velocidade negativa, acontece se inicia o GPS
     track.setSpeed(tmpSpeed < 0 ? 0 : tmpSpeed);

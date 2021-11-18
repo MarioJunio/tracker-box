@@ -15,8 +15,7 @@ abstract class _TrackBase with Store {
   @observable
   int startSpeed = 0;
 
-  @observable
-  int speed = 0;
+  int maxSpeed = 0;
 
   @observable
   double distance = 0;
@@ -30,6 +29,9 @@ abstract class _TrackBase with Store {
   List<Coordinate> coordinates = [];
 
   // transient
+  @observable
+  int speed = 0;
+
   @observable
   double distanceIntegral = 0;
 
@@ -54,13 +56,6 @@ abstract class _TrackBase with Store {
   }
 
   @action
-  setStartSpeed(int speed) {
-    if (this.startSpeed == 0) {
-      this.startSpeed = speed;
-    }
-  }
-
-  @action
   setSpeed(int speed) {
     this.speed = speed;
   }
@@ -78,6 +73,17 @@ abstract class _TrackBase with Store {
   @action
   setTrackStatus(TrackStatus status) {
     this.status = status;
+  }
+
+  @action
+  refreshSpeedDefinitions() {
+    if (startSpeed == 0) {
+      startSpeed = speed;
+    }
+
+    if (speed > maxSpeed) {
+      maxSpeed = speed;
+    }
   }
 
   @action

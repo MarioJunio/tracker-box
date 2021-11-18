@@ -4,8 +4,9 @@ import 'package:flutter_modular/flutter_modular.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:tracker_box/app/core/model/coordinate.dart';
+import 'package:tracker_box/app/core/entities/track_entity.dart';
 import 'package:tracker_box/app/modules/map/map_controller.dart';
+import 'package:tracker_box/app/shared/components/track_pill_info.dart';
 import 'package:tracker_box/app/shared/utils/map_utils.dart';
 import 'package:tracker_box/app/shared/widgets/alert/dialogBox.dart';
 import 'package:tracker_box/app/shared/widgets/alert/dialogTypes.dart';
@@ -14,10 +15,8 @@ import 'map_controller.dart';
 
 class MapPage extends StatefulWidget {
   final String? title;
-  final List<Coordinate> coordinates;
 
-  const MapPage(
-    this.coordinates, {
+  const MapPage({
     Key? key,
     this.title = 'Tracks',
   }) : super(key: key);
@@ -31,10 +30,9 @@ class MapPageState extends ModularState<MapPage, MapController> {
   @override
   void initState() {
     super.initState();
-    controller.setCoordinates(widget.coordinates);
     controller.setOnUpdateCurrentPosition(_onUpdateCurrentPosition);
 
-    MapUtils.drawUserMarkerDot(60, 60, Colors.blue.shade600).then(
+    MapUtils.drawUserMarkerDot(60, 60, Color(0xff64b5f6)).then(
       (value) => controller.setCustomUserMarker(
         BitmapDescriptor.fromBytes(value),
       ),
@@ -62,43 +60,17 @@ class MapPageState extends ModularState<MapPage, MapController> {
                 initialCameraPosition: CameraPosition(
                   target: LatLng(-23.714468, -46.9162349),
                   zoom: 6,
+                  bearing: controller.bearing,
                 ),
                 zoomControlsEnabled: false,
                 markers: Set<Marker>.of(controller.markers.values),
                 polylines: Set<Polyline>.of(controller.polylines.values),
+                onTap: (LatLng position) {
+                  controller.setPinPillPosition(-100);
+                },
               ),
-              Container(
-                margin: EdgeInsets.only(top: 16),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    Container(
-                      margin: EdgeInsets.only(left: 8),
-                      child: _buildIndicator(
-                          controller.track.speed.toString(), "km/h",
-                          bigFont: true),
-                    ),
-                    controller.showIndicators
-                        ? Container(
-                            margin: EdgeInsets.only(left: 8, top: 8),
-                            child: _buildIndicator(
-                              controller.track.timerFormattedWithoutUnit,
-                              controller.track.timerUnit,
-                            ),
-                          )
-                        : Container(),
-                    controller.showIndicators
-                        ? Container(
-                            margin: EdgeInsets.only(left: 8, top: 16),
-                            child: _buildIndicator(
-                              controller.track.distanceFormattedWithoutUnit,
-                              controller.track.distanceUnit,
-                            ),
-                          )
-                        : Container(),
-                  ],
-                ),
-              )
+              _trackIndicators(),
+              _trackPillInfo(),
             ],
           );
         }));
@@ -228,35 +200,47 @@ class MapPageState extends ModularState<MapPage, MapController> {
     controller.setGoogleMapController(mapController);
 
     controller.startCapturePositions();
-
-    _addTrackTrace();
   }
 
-  void _addTrackTrace() {
-    if (widget.coordinates.isEmpty) {
-      return;
-    }
+  Widget _trackIndicators() => Container(
+        margin: EdgeInsets.only(top: 16),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Container(
+              margin: EdgeInsets.only(left: 8),
+              child: _buildIndicator(controller.track.speed.toString(), "km/h",
+                  bigFont: true),
+            ),
+            controller.showIndicators
+                ? Container(
+                    margin: EdgeInsets.only(left: 8, top: 8),
+                    child: _buildIndicator(
+                      controller.track.timerFormattedWithoutUnit,
+                      controller.track.timerUnit,
+                    ),
+                  )
+                : Container(),
+            controller.showIndicators
+                ? Container(
+                    margin: EdgeInsets.only(left: 8, top: 16),
+                    child: _buildIndicator(
+                      controller.track.distanceFormattedWithoutUnit,
+                      controller.track.distanceUnit,
+                    ),
+                  )
+                : Container(),
+          ],
+        ),
+      );
 
-    var originAndDestinateCoordinate =
-        controller.getOriginAndDestinateCoordinates;
-
-    var originCoordinate = originAndDestinateCoordinate[0];
-    var destinateCoordinate = originAndDestinateCoordinate[1];
-
-    final originPosition =
-        LatLng(originCoordinate.latitude, originCoordinate.longitude);
-
-    final destinatePosition =
-        LatLng(destinateCoordinate.latitude, destinateCoordinate.longitude);
-
-    controller.addMarker("1_1", originPosition, BitmapDescriptor.defaultMarker);
-    controller.addMarker(
-        "1_2", destinatePosition, BitmapDescriptor.defaultMarkerWithHue(90));
-
-    controller.addPolyline("1", Colors.blue.shade600, widget.coordinates);
-
-    setState(() {});
-  }
+  Widget _trackPillInfo() => Align(
+        child: TrackPillInfo(
+          pinPillPosition: controller.pinPillPosition,
+          track: controller.selectedTrack,
+        ),
+        alignment: FractionalOffset.bottomCenter,
+      );
 
   /*_getPolyline() async {
     PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(

@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:mobx/mobx.dart';
+import 'package:tracker_box/app/core/entities/track_entity.dart';
+import 'package:tracker_box/app/core/entities/user_entity.dart';
 import 'package:tracker_box/app/core/geolocator/trackerLocator.dart';
 import 'package:tracker_box/app/core/model/coordinate.dart';
 import 'package:tracker_box/app/core/model/track.dart';
@@ -37,6 +39,25 @@ abstract class _MapStoreBase with Store {
   @observable
   bool centralize = true;
 
+  @observable
+  double bearing = 0;
+
+  @observable
+  double? pinPillPosition = -100;
+
+  @observable
+  TrackEntity? selectedTrack;
+
+  @action
+  void setPinPillPosition(double pinPillPosition) {
+    this.pinPillPosition = pinPillPosition;
+  }
+
+  @action
+  void setSelectedTrack(TrackEntity track) {
+    this.selectedTrack = track;
+  }
+
   @action
   void setCentralize(bool centralize) {
     this.centralize = centralize;
@@ -62,12 +83,15 @@ abstract class _MapStoreBase with Store {
   }
 
   @action
-  void addMarker(String id, LatLng position, BitmapDescriptor descriptor) {
+  void addMarker(String id, LatLng position, BitmapDescriptor descriptor,
+      VoidCallback onTap) {
     Marker marker = Marker(
       markerId: MarkerId(id),
       icon: descriptor,
       position: position,
+      onTap: onTap,
     );
+
     markers[marker.markerId] = marker;
   }
 
@@ -84,6 +108,8 @@ abstract class _MapStoreBase with Store {
 
   @action
   void setCurrentMarker(Position position) {
+    this.bearing = position.heading;
+
     Marker marker = Marker(
       markerId: MarkerId("ME"),
       icon: customUserMarker!,
@@ -121,13 +147,13 @@ abstract class _MapStoreBase with Store {
       final lastCoordinate = track.coordinates.last;
 
       // change route color
-      final points = polylines[currentPolylineId]!.points;
+      /*final points = polylines[currentPolylineId]!.points;
 
       polylines[currentPolylineId] = Polyline(
         polylineId: currentPolylineId,
         color: Colors.blue.shade700,
         points: points,
-      );
+      );*/
 
       MapUtils.drawTrackMarkerDot(60, 60, Colors.blueAccent.shade200)
           .then((value) {
@@ -135,6 +161,7 @@ abstract class _MapStoreBase with Store {
           "M1",
           LatLng(lastCoordinate.latitude, lastCoordinate.longitude),
           BitmapDescriptor.fromBytes(value),
+          _onTapMarker,
         );
       });
     }
@@ -178,8 +205,8 @@ abstract class _MapStoreBase with Store {
       // inicia temporizador da track
       if (track.canStartTimer && tmpSpeed > 0) _startTimer();
 
-      // define velocidade inicial do track
-      track.setStartSpeed(tmpSpeed < 0 ? 0 : tmpSpeed);
+      // define velocidade inicial e máxima
+      track.refreshSpeedDefinitions();
 
       final LatLng latLng = LatLng(position.latitude, position.longitude);
 
@@ -189,10 +216,12 @@ abstract class _MapStoreBase with Store {
       // adiciona bandeira de inicio do track
       if (track.coordinates.isEmpty) {
         addMarker(
-            "M0",
-            latLng,
-            BitmapDescriptor.fromBytes(
-                await MapUtils.drawTrackMarkerDot(60, 60, Colors.blueAccent)));
+          "M0",
+          latLng,
+          BitmapDescriptor.fromBytes(
+              await MapUtils.drawTrackMarkerDot(60, 60, Colors.blueAccent)),
+          _onTapMarker,
+        );
       }
 
       // add coordenada a lista
@@ -204,6 +233,23 @@ abstract class _MapStoreBase with Store {
       // calcula distancia
       track.calculateDistance();
     }
+  }
+
+  void _onTapMarker() {
+    TrackEntity myTrack = TrackEntity(
+      distance: track.distance,
+      startSpeed: track.startSpeed,
+      maxSpeed: track.maxSpeed,
+      time: track.timer,
+      user: UserEntity(
+        color: Colors.blueAccent,
+        username: "MarioJBoss",
+        fullname: "Mario Junio Marques Martins",
+      ),
+    );
+
+    setPinPillPosition(0);
+    setSelectedTrack(myTrack);
   }
 
   void _startTimer() {
