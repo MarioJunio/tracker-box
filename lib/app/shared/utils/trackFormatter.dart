@@ -15,7 +15,7 @@ class TrackFormatter {
       decimalPlaces = 2;
     }
 
-    return "${distance.toStringAsFixed(decimalPlaces)}${showLabel ? unit : ''}";
+    return "${distance.toStringAsFixed(decimalPlaces)} ${showLabel ? unit : ''}";
   }
 
   static String distanceUnit(double distance) {

@@ -3,11 +3,11 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:tracker_box/app/core/model/coordinate.dart';
+import 'package:tracker_box/app/core/entities/coordinate_entity.dart';
 
 class MapUtils {
   static void fitMapOnTrack(
-      List<Coordinate> coordinates, GoogleMapController mapController) {
+      List<CoordinateEntity> coordinates, GoogleMapController mapController) {
     double minLat = coordinates.first.latitude,
         minLong = coordinates.first.longitude;
     double maxLat = minLat, maxLong = minLong;
@@ -40,7 +40,7 @@ class MapUtils {
     );
   }
 
-  static List<LatLng> toPolylineCoordinates(List<Coordinate> coordinates) =>
+  static List<LatLng> toPolylineCoordinates(List<CoordinateEntity> coordinates) =>
       coordinates
           .map(
               (coordinate) => LatLng(coordinate.latitude, coordinate.longitude))
@@ -51,7 +51,7 @@ class MapUtils {
       Marker(markerId: id, icon: bitmapDescriptor, position: position);
 
   static Polyline createPolyline(
-          PolylineId id, Color color, List<Coordinate> coordinates) =>
+          PolylineId id, Color color, List<CoordinateEntity> coordinates) =>
       Polyline(
         polylineId: id,
         color: Colors.red,

@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:tracker_box/app/core/entities/track_entity.dart';
+import 'package:tracker_box/app/shared/utils/constants.dart';
 import 'package:tracker_box/app/shared/utils/map_utils.dart';
 import 'package:tracker_box/app/shared/utils/trackFormatter.dart';
 
@@ -40,6 +41,7 @@ class _TrackPillInfoState extends State<TrackPillInfo> {
       left: 0,
       right: 0,
       bottom: widget.pinPillPosition,
+      height: Constants.pillHeight,
       child: Container(
         margin: EdgeInsets.only(left: 16, right: 16, bottom: 16),
         padding: EdgeInsets.only(left: 8, right: 8),
@@ -73,21 +75,18 @@ class _TrackPillInfoState extends State<TrackPillInfo> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      widget.track!.user!.username!,
+                      widget.track?.user?.username ?? "Usuário",
                       style: Theme.of(context)
                           .textTheme
                           .bodyText1!
                           .copyWith(color: Colors.blueAccent.shade200),
                     ),
-                    SizedBox(
-                      height: 8,
-                    ),
                     _metric("Distância",
-                        TrackFormatter.formatDistance(widget.track!.distance!)),
+                        TrackFormatter.formatDistance(widget.track?.distance ?? 0)),
                     _metric("Tempo",
-                        TrackFormatter.formatTimer(widget.track!.time!)),
+                        TrackFormatter.formatTimer(widget.track?.time ?? 0)),
                     _metric("Velocidade máxima",
-                        TrackFormatter.formatSpeed(widget.track!.maxSpeed!)),
+                        TrackFormatter.formatSpeed(widget.track?.maxSpeed ?? 0)),
                   ],
                 ),
               ),

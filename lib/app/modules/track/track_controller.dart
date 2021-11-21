@@ -5,7 +5,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:mobx/mobx.dart';
 import 'package:tracker_box/app/core/geolocator/trackerLocator.dart';
-import 'package:tracker_box/app/core/model/coordinate.dart';
+import 'package:tracker_box/app/core/entities/coordinate_entity.dart';
 import 'package:tracker_box/app/core/model/launch.dart';
 import 'package:tracker_box/app/core/model/launchType.dart';
 import 'package:tracker_box/app/core/model/track.dart';
@@ -60,7 +60,7 @@ abstract class _TrackControllerBase with Store {
     //TODO: salva track no device local caso não haja conexão com a internet ou sincroniza com a nuvem
     //TODO: buscar todos os track do meu usuário
     //TODO: buscar todos os tracks dos outros usuários no raio definido
-    final List<Coordinate> trackCoordinates = track.coordinates;
+    final List<CoordinateEntity> trackCoordinates = track.coordinates;
 
     resetLaunch(LaunchType.speed);
 
@@ -195,7 +195,7 @@ abstract class _TrackControllerBase with Store {
     track.setSpeed(tmpSpeed < 0 ? 0 : tmpSpeed);
 
     // add coordenada a lista
-    track.coordinates.add(new Coordinate(
+    track.coordinates.add(new CoordinateEntity(
       latitude: position.latitude,
       longitude: position.longitude,
     ));

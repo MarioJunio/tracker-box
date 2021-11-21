@@ -3,8 +3,7 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:mobx/mobx.dart';
-import 'package:tracker_box/app/core/model/coordinate.dart';
+import 'package:tracker_box/app/core/entities/coordinate_entity.dart';
 import 'package:tracker_box/app/core/model/launchType.dart';
 import 'package:tracker_box/app/modules/track/track_controller.dart';
 import 'package:tracker_box/app/shared/utils/map_utils.dart';
@@ -73,7 +72,7 @@ class _TrackInProgressPageState extends State<TrackInProgressPage> {
     controller.setGoogleMapController(mapController);
 
     if (controller.track.isComplete) {
-      final List<Coordinate> trackMarkers =
+      final List<CoordinateEntity> trackMarkers =
           controller.track.getTraceBeginAndEndCoordinates;
 
       final originPosition =

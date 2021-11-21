@@ -1,6 +1,6 @@
 import 'package:mobx/mobx.dart';
 import 'package:tracker_box/app/core/location/location.dart';
-import 'package:tracker_box/app/core/model/coordinate.dart';
+import 'package:tracker_box/app/core/entities/coordinate_entity.dart';
 import 'package:tracker_box/app/core/model/trackStatus.dart';
 import 'package:tracker_box/app/shared/preferences/appPrefs.dart';
 import 'package:tracker_box/app/shared/utils/trackFormatter.dart';
@@ -26,7 +26,7 @@ abstract class _TrackBase with Store {
   @observable
   int timer = 0;
 
-  List<Coordinate> coordinates = [];
+  List<CoordinateEntity> coordinates = [];
 
   // transient
   @observable
@@ -158,7 +158,7 @@ abstract class _TrackBase with Store {
   @computed
   bool get isComplete => status == TrackStatus.complete;
 
-  List<Coordinate> get getTraceBeginAndEndCoordinates =>
+  List<CoordinateEntity> get getTraceBeginAndEndCoordinates =>
       coordinates.isNotEmpty ? [coordinates.first, coordinates.last] : [];
 
   bool _canAcumulateDistance(double distanceBetween) =>

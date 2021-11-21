@@ -7,10 +7,11 @@ import 'package:mobx/mobx.dart';
 import 'package:tracker_box/app/core/entities/track_entity.dart';
 import 'package:tracker_box/app/core/entities/user_entity.dart';
 import 'package:tracker_box/app/core/geolocator/trackerLocator.dart';
-import 'package:tracker_box/app/core/model/coordinate.dart';
+import 'package:tracker_box/app/core/entities/coordinate_entity.dart';
 import 'package:tracker_box/app/core/model/track.dart';
 import 'package:tracker_box/app/core/model/trackStatus.dart';
 import 'package:tracker_box/app/shared/preferences/appPrefs.dart';
+import 'package:tracker_box/app/shared/utils/constants.dart';
 import 'package:tracker_box/app/shared/utils/map_utils.dart';
 
 part 'map_controller.g.dart';
@@ -25,7 +26,7 @@ abstract class _MapStoreBase with Store {
   ObservableMap<MarkerId, Marker> markers = ObservableMap();
   ObservableMap<PolylineId, Polyline> polylines = ObservableMap();
 
-  List<Coordinate> coordinates = [];
+  List<CoordinateEntity> coordinates = [];
 
   BitmapDescriptor? customUserMarker;
 
@@ -43,7 +44,7 @@ abstract class _MapStoreBase with Store {
   double bearing = 0;
 
   @observable
-  double? pinPillPosition = -100;
+  double? pinPillPosition = -Constants.pillHeight;
 
   @observable
   TrackEntity? selectedTrack;
@@ -96,7 +97,7 @@ abstract class _MapStoreBase with Store {
   }
 
   @action
-  void addPolyline(String id, Color color, List<Coordinate> coordinates) {
+  void addPolyline(String id, Color color, List<CoordinateEntity> coordinates) {
     Polyline polyline = Polyline(
       polylineId: PolylineId(id),
       color: color,
@@ -225,7 +226,7 @@ abstract class _MapStoreBase with Store {
       }
 
       // add coordenada a lista
-      track.coordinates.add(new Coordinate(
+      track.coordinates.add(new CoordinateEntity(
         latitude: position.latitude,
         longitude: position.longitude,
       ));
@@ -269,11 +270,11 @@ abstract class _MapStoreBase with Store {
     _countTimer?.cancel();
   }
 
-  List<Coordinate> get getOriginAndDestinateCoordinates {
+  List<CoordinateEntity> get getOriginAndDestinateCoordinates {
     return coordinates.isNotEmpty ? [coordinates.first, coordinates.last] : [];
   }
 
-  void setCoordinates(List<Coordinate> coordinates) =>
+  void setCoordinates(List<CoordinateEntity> coordinates) =>
       this.coordinates = coordinates;
 
   void setGoogleMapController(GoogleMapController googleMapController) =>

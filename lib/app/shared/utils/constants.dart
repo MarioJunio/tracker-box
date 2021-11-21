@@ -1,5 +1,6 @@
 class Constants {
   static double padding = 16;
   static double avatarRadius = 50;
-  static String GOOGLE_API_KEY = "AIzaSyAIkJ6els3EQgJzUrZO3LtTuTStgbJwOYk";
+  static double pillHeight = 110;
+  static String googleApiKey = "AIzaSyAIkJ6els3EQgJzUrZO3LtTuTStgbJwOYk";
 }

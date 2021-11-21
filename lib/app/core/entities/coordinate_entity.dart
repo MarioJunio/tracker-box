@@ -1,7 +1,7 @@
 import 'package:mobx/mobx.dart';
-part 'coordinate.g.dart';
+part '../model/coordinate_entity.g.dart';
 
-class Coordinate = _CoordinatesBase with _$Coordinate;
+class CoordinateEntity = _CoordinatesBase with _$CoordinateEntity;
 
 abstract class _CoordinatesBase with Store {
   late double latitude;

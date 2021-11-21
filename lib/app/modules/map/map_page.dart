@@ -4,7 +4,6 @@ import 'package:flutter_modular/flutter_modular.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:tracker_box/app/core/entities/track_entity.dart';
 import 'package:tracker_box/app/modules/map/map_controller.dart';
 import 'package:tracker_box/app/shared/components/track_pill_info.dart';
 import 'package:tracker_box/app/shared/utils/map_utils.dart';
@@ -54,7 +53,16 @@ class MapPageState extends ModularState<MapPage, MapController> {
         body: Observer(builder: (_) {
           return Stack(
             children: [
-              GoogleMap(
+              _mapView(),
+              _trackIndicators(),
+              _trackPillInfo(),
+            ],
+          );
+        }));
+  }
+
+  Widget _mapView() {
+    return GoogleMap(
                 onMapCreated: _onMapCreated,
                 myLocationButtonEnabled: false,
                 initialCameraPosition: CameraPosition(
@@ -68,12 +76,7 @@ class MapPageState extends ModularState<MapPage, MapController> {
                 onTap: (LatLng position) {
                   controller.setPinPillPosition(-100);
                 },
-              ),
-              _trackIndicators(),
-              _trackPillInfo(),
-            ],
-          );
-        }));
+              );
   }
 
   Widget get _getCentralizeButton => Observer(builder: (_) {
@@ -234,13 +237,10 @@ class MapPageState extends ModularState<MapPage, MapController> {
         ),
       );
 
-  Widget _trackPillInfo() => Align(
-        child: TrackPillInfo(
-          pinPillPosition: controller.pinPillPosition,
-          track: controller.selectedTrack,
-        ),
-        alignment: FractionalOffset.bottomCenter,
-      );
+  Widget _trackPillInfo() => TrackPillInfo(
+    pinPillPosition: controller.pinPillPosition!,
+    track: controller.selectedTrack,
+  );
 
   /*_getPolyline() async {
     PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(

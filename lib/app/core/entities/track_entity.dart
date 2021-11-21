@@ -1,5 +1,5 @@
 import 'package:tracker_box/app/core/entities/user_entity.dart';
-import 'package:tracker_box/app/core/model/coordinate.dart';
+import 'package:tracker_box/app/core/entities/coordinate_entity.dart';
 
 class TrackEntity {
   final int? id;
@@ -7,7 +7,7 @@ class TrackEntity {
   final int? maxSpeed;
   final double? distance;
   final int? time;
-  final List<Coordinate>? coordinates;
+  final List<CoordinateEntity>? coordinates;
   final UserEntity? user;
 
   TrackEntity(
