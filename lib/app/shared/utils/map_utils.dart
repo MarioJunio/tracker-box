@@ -8,25 +8,25 @@ import 'package:tracker_box/app/core/entities/coordinate_entity.dart';
 class MapUtils {
   static void fitMapOnTrack(
       List<CoordinateEntity> coordinates, GoogleMapController mapController) {
-    double minLat = coordinates.first.latitude,
-        minLong = coordinates.first.longitude;
+    double minLat = coordinates.first.latitude!,
+        minLong = coordinates.first.longitude!;
     double maxLat = minLat, maxLong = minLong;
 
     coordinates.forEach((coord) {
-      if (coord.latitude < minLat) {
-        minLat = coord.latitude;
+      if (coord.latitude! < minLat) {
+        minLat = coord.latitude!;
       }
 
-      if (coord.longitude < minLong) {
-        minLong = coord.longitude;
+      if (coord.longitude! < minLong) {
+        minLong = coord.longitude!;
       }
 
-      if (coord.latitude > maxLat) {
-        maxLat = coord.latitude;
+      if (coord.latitude! > maxLat) {
+        maxLat = coord.latitude!;
       }
 
-      if (coord.longitude > maxLong) {
-        maxLong = coord.longitude;
+      if (coord.longitude! > maxLong) {
+        maxLong = coord.longitude!;
       }
     });
 
@@ -43,7 +43,7 @@ class MapUtils {
   static List<LatLng> toPolylineCoordinates(List<CoordinateEntity> coordinates) =>
       coordinates
           .map(
-              (coordinate) => LatLng(coordinate.latitude, coordinate.longitude))
+              (coordinate) => LatLng(coordinate.latitude!, coordinate.longitude!))
           .toList();
 
   static Marker createMarker(

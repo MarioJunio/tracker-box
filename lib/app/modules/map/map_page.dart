@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:mobx/mobx.dart';
 import 'package:tracker_box/app/modules/map/map_controller.dart';
 import 'package:tracker_box/app/shared/components/track_pill_info.dart';
 import 'package:tracker_box/app/shared/utils/map_utils.dart';
@@ -26,10 +26,11 @@ class MapPage extends StatefulWidget {
 class MapPageState extends ModularState<MapPage, MapController> {
   // PolylinePoints polylinePoints = PolylinePoints();
 
+  late ReactionDisposer loadTracks;
+
   @override
   void initState() {
     super.initState();
-    controller.setOnUpdateCurrentPosition(_onUpdateCurrentPosition);
 
     MapUtils.drawUserMarkerDot(60, 60, Color(0xff64b5f6)).then(
       (value) => controller.setCustomUserMarker(
@@ -63,20 +64,20 @@ class MapPageState extends ModularState<MapPage, MapController> {
 
   Widget _mapView() {
     return GoogleMap(
-                onMapCreated: _onMapCreated,
-                myLocationButtonEnabled: false,
-                initialCameraPosition: CameraPosition(
-                  target: LatLng(-23.714468, -46.9162349),
-                  zoom: 6,
-                  bearing: controller.bearing,
-                ),
-                zoomControlsEnabled: false,
-                markers: Set<Marker>.of(controller.markers.values),
-                polylines: Set<Polyline>.of(controller.polylines.values),
-                onTap: (LatLng position) {
-                  controller.setPinPillPosition(-100);
-                },
-              );
+      onMapCreated: _onMapCreated,
+      myLocationButtonEnabled: false,
+      initialCameraPosition: CameraPosition(
+        target: LatLng(-23.714468, -46.9162349),
+        zoom: 6,
+        bearing: controller.currentPosition?.heading ?? 0.0,
+      ),
+      zoomControlsEnabled: false,
+      markers: Set<Marker>.of(controller.markers.values),
+      polylines: Set<Polyline>.of(controller.polylines.values),
+      onTap: (LatLng position) {
+        controller.setPinPillPosition(-100);
+      },
+    );
   }
 
   Widget get _getCentralizeButton => Observer(builder: (_) {
@@ -189,10 +190,6 @@ class MapPageState extends ModularState<MapPage, MapController> {
     );
   }
 
-  void _onUpdateCurrentPosition(Position position) {
-    controller.setCurrentMarker(position);
-  }
-
   @override
   void dispose() {
     controller.stopCapturePositions();
@@ -238,9 +235,9 @@ class MapPageState extends ModularState<MapPage, MapController> {
       );
 
   Widget _trackPillInfo() => TrackPillInfo(
-    pinPillPosition: controller.pinPillPosition!,
-    track: controller.selectedTrack,
-  );
+        pinPillPosition: controller.pinPillPosition!,
+        track: controller.selectedTrack,
+      );
 
   /*_getPolyline() async {
     PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(

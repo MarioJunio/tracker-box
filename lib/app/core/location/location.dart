@@ -6,6 +6,10 @@ abstract class ILocation {
 
   static double distanceBetween(CoordinateEntity c1, CoordinateEntity c2) {
     return Geolocator.distanceBetween(
-        c1.latitude, c1.longitude, c2.latitude, c2.longitude);
+      c1.latitude!,
+      c1.longitude!,
+      c2.latitude!,
+      c2.longitude!,
+    );
   }
 }

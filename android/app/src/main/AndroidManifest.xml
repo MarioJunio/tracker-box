@@ -11,12 +11,18 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     
     <application
-        android:name="io.flutter.app.FlutterApplication"
+        android:name="${applicationName}"
         android:label="tracker_box"
         android:icon="@mipmap/ic_launcher">
 
+        <meta-data
+          android:name="flutterEmbedding"
+          android:value="2" />
+
         <meta-data android:name="com.google.android.geo.API_KEY"
                android:value="AIzaSyAIkJ6els3EQgJzUrZO3LtTuTStgbJwOYk"/>
+
+        
 
         <activity
             android:name=".MainActivity"

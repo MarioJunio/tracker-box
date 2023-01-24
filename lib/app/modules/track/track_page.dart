@@ -1,3 +1,4 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:flutter_modular/flutter_modular.dart';
@@ -9,6 +10,7 @@ import 'package:tracker_box/app/modules/track/track-pages/trackInProgress.dart';
 import 'package:tracker_box/app/modules/track/track_module.dart';
 import 'package:tracker_box/app/modules/track/widgets/startEngineButton.dart';
 import 'package:tracker_box/app/shared/preferences/appPrefs.dart';
+import 'package:tracker_box/app/shared/utils/internet_utils.dart';
 import 'package:tracker_box/app/shared/widgets/alert/dialogBox.dart';
 import 'package:tracker_box/app/shared/widgets/alert/dialogTypes.dart';
 
@@ -20,9 +22,13 @@ class TrackPage extends StatefulWidget {
 }
 
 class _TrackPageState extends ModularState<TrackPage, TrackController> {
+  bool _processingInternetEvent = false;
+
   @override
   void initState() {
     super.initState();
+
+    _listenInternetConectivity();
 
     autorun((_) {
       if (controller.errorOnTrackingStart) {
@@ -42,6 +48,24 @@ class _TrackPageState extends ModularState<TrackPage, TrackController> {
             );
           },
         );
+      }
+    });
+  }
+
+  void _listenInternetConectivity() {
+    Connectivity()
+        .onConnectivityChanged
+        .listen((ConnectivityResult result) async {
+      if (_processingInternetEvent) return;
+
+      _processingInternetEvent = true;
+
+      try {
+        if (InternetUtils.checkInternetConnection(result)) {
+          await controller.publishLocalTracks(context);
+        }
+      } finally {
+        _processingInternetEvent = false;
       }
     });
   }
@@ -123,11 +147,11 @@ class _TrackPageState extends ModularState<TrackPage, TrackController> {
               child: CreateTrackPage(),
             );
 
-          if (controller.track.isPrepare)
+          /*if (controller.track.isPrepare)
             return Padding(
               padding: const EdgeInsets.all(16),
               child: TrackInPreparePage(),
-            );
+            );*/
 
           return TrackInProgressPage();
         },

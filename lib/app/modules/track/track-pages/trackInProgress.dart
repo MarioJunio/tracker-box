@@ -20,9 +20,39 @@ class _TrackInProgressPageState extends State<TrackInProgressPage> {
   Map<MarkerId, Marker> markers = {};
   Map<PolylineId, Polyline> polylines = {};
 
+  double mainIndicatorHeight = 0;
+  double mainIndicatorContentVisible = 0;
+
+  double secondaryFirstIndicatorHeight = 0;
+  double secondaryFirstIndicatorVisible = 0;
+
   @override
   void initState() {
     super.initState();
+
+    Future.delayed(Duration(milliseconds: 100)).then((value) {
+      setState(() {
+        mainIndicatorHeight = 213;
+        mainIndicatorContentVisible = 1;
+      });
+    });
+
+    Future.delayed(Duration(seconds: 1)).then((value) {
+      setState(() {
+        secondaryFirstIndicatorHeight = 100;
+        secondaryFirstIndicatorVisible = 1;
+      });
+    });
+
+    /*when(
+      (_) => controller.track.status == TrackStatus.prepare,
+      () {
+        print("=> Chamou");
+        setState(() {
+          mainIndicatorHeight = 213;
+        });
+      },
+    );*/
   }
 
   @override
@@ -30,13 +60,10 @@ class _TrackInProgressPageState extends State<TrackInProgressPage> {
     return Container(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          _buildStartSpeedIndicator(),
+        children: [
+          _buildStartSpeedIndicator,
           _mainIndicator,
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: _buildSecondaryIndicators,
-          ),
+          _buildSecondaryIndicators,
           _mainGap,
           _buildMapViewTracker,
         ],
@@ -57,7 +84,7 @@ class _TrackInProgressPageState extends State<TrackInProgressPage> {
                     myLocationButtonEnabled: false,
                     initialCameraPosition: CameraPosition(
                       target: LatLng(-23.714468, -46.9162349),
-                      zoom: 6,
+                      zoom: 5,
                     ),
                     zoomControlsEnabled: false,
                     markers: Set<Marker>.of(markers.values),
@@ -75,32 +102,34 @@ class _TrackInProgressPageState extends State<TrackInProgressPage> {
       final List<CoordinateEntity> trackMarkers =
           controller.track.getTraceBeginAndEndCoordinates;
 
-      final originPosition =
-          LatLng(trackMarkers[0].latitude, trackMarkers[0].longitude);
+      if (trackMarkers.isNotEmpty) {
+        final originPosition =
+            LatLng(trackMarkers[0].latitude!, trackMarkers[0].longitude!);
 
-      final destinatePosition =
-          LatLng(trackMarkers[1].latitude, trackMarkers[1].longitude);
+        final destinatePosition =
+            LatLng(trackMarkers[1].latitude!, trackMarkers[1].longitude!);
 
-      _addMarker(
-        "start",
-        originPosition,
-        BitmapDescriptor.defaultMarker,
-      );
+        _addMarker(
+          "start",
+          originPosition,
+          BitmapDescriptor.defaultMarker,
+        );
 
-      _addMarker(
-        "end",
-        destinatePosition,
-        BitmapDescriptor.defaultMarkerWithHue(50),
-      );
+        _addMarker(
+          "end",
+          destinatePosition,
+          BitmapDescriptor.defaultMarkerWithHue(50),
+        );
 
-      _addPolyLine();
+        _addPolyLine();
 
-      mapController.animateCamera(CameraUpdate.newLatLngZoom(
-        LatLng(trackMarkers[0].latitude, trackMarkers[0].longitude),
-        16.5,
-      ));
+        mapController.animateCamera(CameraUpdate.newLatLngZoom(
+          LatLng(trackMarkers[0].latitude!, trackMarkers[0].longitude!),
+          16.5,
+        ));
 
-      setState(() {});
+        // setState(() {});
+      }
     }
   }
 
@@ -138,51 +167,62 @@ class _TrackInProgressPageState extends State<TrackInProgressPage> {
 
   Widget _buildMainIndicator(String title, double currentValue, double maxValue,
       String formattedValue) {
-    return Card(
-      elevation: 4,
-      child: Container(
-        padding: EdgeInsets.only(top: 8),
-        child: Column(
-          children: <Widget>[
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: Color(0xff00897b),
-              ),
-            ),
-            Container(
-              height: 180,
-              width: double.infinity,
-              child: Stack(
-                children: <Widget>[
-                  GaugeChart.fromValue(
-                    value: currentValue,
-                    max: maxValue,
-                    animate: false,
-                    width: 16,
-                    color: Theme.of(context).primaryColor,
+    return AnimatedContainer(
+      height: mainIndicatorHeight,
+      duration: const Duration(seconds: 1),
+      curve: Curves.fastOutSlowIn,
+      child: Card(
+        elevation: 1,
+        child: Padding(
+          padding: EdgeInsets.only(top: 8),
+          child: SingleChildScrollView(
+            child: Column(
+              children: <Widget>[
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xff00897b),
                   ),
-                  Center(
-                    child: Text(
-                      formattedValue,
-                      style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).primaryColor),
+                ),
+                AnimatedOpacity(
+                  duration: Duration(seconds: 3),
+                  curve: Curves.fastOutSlowIn,
+                  opacity: mainIndicatorContentVisible,
+                  child: SizedBox(
+                    height: 180,
+                    child: Stack(
+                      children: <Widget>[
+                        GaugeChart.fromValue(
+                          value: currentValue,
+                          max: maxValue,
+                          animate: false,
+                          width: 16,
+                          color: Theme.of(context).primaryColor,
+                        ),
+                        Center(
+                          child: Text(
+                            formattedValue,
+                            style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).primaryColor),
+                          ),
+                        )
+                      ],
                     ),
-                  )
-                ],
-              ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Row get _buildSecondaryIndicators {
+  Widget get _buildSecondaryIndicators {
     var first;
     var second;
 
@@ -197,16 +237,35 @@ class _TrackInProgressPageState extends State<TrackInProgressPage> {
       second = _buildDistanceIndicator();
     }
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: <Widget>[
-        Expanded(child: first),
-        Expanded(child: second),
-      ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: AnimatedContainer(
+                height: secondaryFirstIndicatorHeight,
+                duration: Duration(seconds: 1),
+                curve: Curves.fastOutSlowIn,
+                child: SingleChildScrollView(
+                  child: first,
+                )),
+          ),
+          Expanded(
+            child: AnimatedContainer(
+                height: secondaryFirstIndicatorHeight,
+                duration: Duration(seconds: 1),
+                curve: Curves.fastOutSlowIn,
+                child: SingleChildScrollView(
+                  child: second,
+                )),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildStartSpeedIndicator() => Observer(
+  Widget get _buildStartSpeedIndicator => Observer(
         builder: (_) {
           return (controller.track.startSpeed) != controller.track.speed
               ? Container(
@@ -256,45 +315,50 @@ class _TrackInProgressPageState extends State<TrackInProgressPage> {
   Widget _buildSpeedIndicator() => Card(
         child: Container(
           padding: EdgeInsets.all(16),
-          child: Column(
-            children: <Widget>[
-              Text(
-                "Velocidade",
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xff00897b),
+          child: AnimatedOpacity(
+            duration: Duration(seconds: 3),
+            opacity: secondaryFirstIndicatorVisible,
+            curve: Curves.fastOutSlowIn,
+            child: Column(
+              children: <Widget>[
+                Text(
+                  "Velocidade",
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xff00897b),
+                  ),
                 ),
-              ),
-              SizedBox(height: 16),
-              Stack(
-                children: <Widget>[
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: FaIcon(
-                      FontAwesomeIcons.tachometerAlt,
-                      size: 26,
-                      color: Theme.of(context).primaryColor,
+                SizedBox(height: 16),
+                Stack(
+                  children: <Widget>[
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: FaIcon(
+                        FontAwesomeIcons.tachometerAlt,
+                        size: 26,
+                        color: Theme.of(context).primaryColor,
+                      ),
                     ),
-                  ),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Observer(
-                      builder: (_) {
-                        return Text(
-                          "${controller.track.speedFormatted}",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).primaryColor,
-                          ),
-                        );
-                      },
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Observer(
+                        builder: (_) {
+                          return Text(
+                            "${controller.track.speedFormatted}",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).primaryColor,
+                            ),
+                          );
+                        },
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       );
@@ -302,45 +366,50 @@ class _TrackInProgressPageState extends State<TrackInProgressPage> {
   Widget _buildDistanceIndicator() => Card(
         child: Container(
           padding: EdgeInsets.all(16),
-          child: Column(
-            children: <Widget>[
-              Text(
-                "Distância",
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xff00897b),
+          child: AnimatedOpacity(
+            duration: Duration(seconds: 3),
+            opacity: secondaryFirstIndicatorVisible,
+            curve: Curves.fastOutSlowIn,
+            child: Column(
+              children: <Widget>[
+                Text(
+                  "Distância",
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xff00897b),
+                  ),
                 ),
-              ),
-              SizedBox(height: 16),
-              Stack(
-                children: <Widget>[
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: FaIcon(
-                      FontAwesomeIcons.road,
-                      size: 26,
-                      color: Theme.of(context).primaryColor,
+                SizedBox(height: 16),
+                Stack(
+                  children: <Widget>[
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: FaIcon(
+                        FontAwesomeIcons.road,
+                        size: 26,
+                        color: Theme.of(context).primaryColor,
+                      ),
                     ),
-                  ),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Observer(
-                      builder: (_) {
-                        return Text(
-                          "${controller.track.distanceFormatted}",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).primaryColor,
-                          ),
-                        );
-                      },
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Observer(
+                        builder: (_) {
+                          return Text(
+                            "${controller.track.distanceFormatted}",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).primaryColor,
+                            ),
+                          );
+                        },
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       );
@@ -348,45 +417,50 @@ class _TrackInProgressPageState extends State<TrackInProgressPage> {
   Widget _builtCountTimerIndicator() => Card(
         child: Container(
           padding: EdgeInsets.all(16),
-          child: Column(
-            children: <Widget>[
-              Text(
-                "Tempo",
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xff00897b),
+          child: AnimatedOpacity(
+            duration: Duration(seconds: 3),
+            opacity: secondaryFirstIndicatorVisible,
+            curve: Curves.fastOutSlowIn,
+            child: Column(
+              children: <Widget>[
+                Text(
+                  "Tempo",
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xff00897b),
+                  ),
                 ),
-              ),
-              SizedBox(height: 16),
-              Stack(
-                children: <Widget>[
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: FaIcon(
-                      FontAwesomeIcons.stopwatch,
-                      size: 26,
-                      color: Theme.of(context).primaryColor,
+                SizedBox(height: 16),
+                Stack(
+                  children: <Widget>[
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: FaIcon(
+                        FontAwesomeIcons.stopwatch,
+                        size: 26,
+                        color: Theme.of(context).primaryColor,
+                      ),
                     ),
-                  ),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Observer(
-                      builder: (_) {
-                        return Text(
-                          "${controller.track.timerFormatted}",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).primaryColor,
-                          ),
-                        );
-                      },
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Observer(
+                        builder: (_) {
+                          return Text(
+                            "${controller.track.timerFormatted}",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).primaryColor,
+                            ),
+                          );
+                        },
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       );

@@ -1,23 +1,39 @@
 import 'dart:async';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:mobx/mobx.dart';
-import 'package:tracker_box/app/core/geolocator/trackerLocator.dart';
 import 'package:tracker_box/app/core/entities/coordinate_entity.dart';
+import 'package:tracker_box/app/core/entities/track_entity.dart';
+import 'package:tracker_box/app/core/entities/user_entity.dart';
+import 'package:tracker_box/app/core/geolocator/trackerLocator.dart';
 import 'package:tracker_box/app/core/model/launch.dart';
 import 'package:tracker_box/app/core/model/launchType.dart';
 import 'package:tracker_box/app/core/model/track.dart';
 import 'package:tracker_box/app/core/model/trackStatus.dart';
+import 'package:tracker_box/app/core/usecase/publish_track_usecase.dart';
 import 'package:tracker_box/app/modules/track/track_module.dart';
+import 'package:tracker_box/app/shared/database/repository/track_local_database_repository.dart';
 import 'package:tracker_box/app/shared/preferences/appPrefs.dart';
+import 'package:tracker_box/app/shared/utils/internet_utils.dart';
 
 part 'track_controller.g.dart';
 
+final $TrackController = BindInject(
+  (i) => TrackController(
+    i(),
+    i(),
+  ),
+  isSingleton: true,
+  isLazy: true,
+);
 class TrackController = _TrackControllerBase with _$TrackController;
 
 abstract class _TrackControllerBase with Store {
+  final PublishTrackUsecase _publishTrackUsecase;
+  final TrackLocalDatabaseRepository _trackLocalDatabaseRepository;
   final TrackerLocator trackerLocator = new TrackerLocator();
   final TrackerLocator trackerCalibrate = new TrackerLocator();
   GoogleMapController? mapController;
@@ -39,12 +55,15 @@ abstract class _TrackControllerBase with Store {
   @observable
   bool errorOnTrackingStart = false;
 
+  bool uploadingTracks = false;
+
   @action
   setErrorOnTrackingStart(bool errorOnTrackingStart) {
     this.errorOnTrackingStart = errorOnTrackingStart;
   }
 
-  _TrackControllerBase() {
+  _TrackControllerBase(
+      this._publishTrackUsecase, this._trackLocalDatabaseRepository) {
     resetLaunch(LaunchType.speed);
 
     trackerCalibrate.listenForPosition(_listenForCalibrate);
@@ -55,21 +74,64 @@ abstract class _TrackControllerBase with Store {
     launch.selectLaunchType(type);
   }
 
+  // ignore: slash_for_doc_comments
+  /**
+   * Load saved local tracks and publish
+   */
+  publishLocalTracks(BuildContext context) async {
+    if (uploadingTracks) {
+      return;
+    }
+
+    try {
+      uploadingTracks = true;
+
+      final List<TrackEntity> tracksEntities =
+          await _trackLocalDatabaseRepository.getAll(
+              userId: '6236840c8195911e1ac2cbb8');
+
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text("Offline Tracks: ${tracksEntities.length}"),
+      ));
+
+      for (final trackEntity in tracksEntities) {
+        try {
+          await _publishTrackUsecase(trackEntity);
+        } catch (ex) {
+          print("Erro ao publicar offline track: $ex");
+        } finally {
+          await _trackLocalDatabaseRepository.delete(trackEntity.localId!);
+        }
+      }
+    } finally {
+      uploadingTracks = false;
+    }
+  }
+
   @action
-  publishTrack() {
-    //TODO: salva track no device local caso não haja conexão com a internet ou sincroniza com a nuvem
-    //TODO: buscar todos os track do meu usuário
-    //TODO: buscar todos os tracks dos outros usuários no raio definido
-    final List<CoordinateEntity> trackCoordinates = track.coordinates;
+  publishTrack() async {
+    TrackEntity trackEntity =
+        track.toEntity(UserEntity(id: "6236840c8195911e1ac2cbb8"));
+
+    if (await InternetUtils.hasInternetConnection()) {
+      try {
+        trackEntity = await _publishTrackUsecase(trackEntity);
+      } catch (exception) {
+        print('Erro ao publicar track: $exception');
+      }
+    } else {
+      await _trackLocalDatabaseRepository.save(trackEntity);
+    }
 
     resetLaunch(LaunchType.speed);
 
     track.reset();
     track.setTrackStatus(TrackStatus.standby);
 
+    //TODO: remover campos: arguments
     Modular.to.pushNamed(
       TrackModule.MAP_MODULE_ROUTE,
-      arguments: trackCoordinates,
+      arguments: trackEntity.coordinates,
     );
   }
 
@@ -116,7 +178,7 @@ abstract class _TrackControllerBase with Store {
         TrackStatus.complete,
       ].contains(track.status);
 
-  @action
+  @action    
   _prepareTracking() {
     track.setTrackStatus(TrackStatus.prepare);
 
@@ -144,8 +206,6 @@ abstract class _TrackControllerBase with Store {
 
     // inicia listener para obter a posição mais atual
     trackerLocator.listenForPosition(_listenForPosition).then((value) {
-      print("M=listenForPosition, value=$value");
-
       if (value) {
         track.setTrackStatus(TrackStatus.active);
       } else {
@@ -209,6 +269,7 @@ abstract class _TrackControllerBase with Store {
 
   @action
   _listenForCalibrate(Position position) {
+    // print(position.accuracy);
     track.accuracy = position.accuracy;
   }
 

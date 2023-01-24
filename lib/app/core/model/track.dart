@@ -1,8 +1,12 @@
+import 'package:intl/intl.dart';
 import 'package:mobx/mobx.dart';
-import 'package:tracker_box/app/core/location/location.dart';
 import 'package:tracker_box/app/core/entities/coordinate_entity.dart';
+import 'package:tracker_box/app/core/entities/track_entity.dart';
+import 'package:tracker_box/app/core/entities/user_entity.dart';
+import 'package:tracker_box/app/core/location/location.dart';
 import 'package:tracker_box/app/core/model/trackStatus.dart';
 import 'package:tracker_box/app/shared/preferences/appPrefs.dart';
+import 'package:tracker_box/app/shared/utils/crypto_utils.dart';
 import 'package:tracker_box/app/shared/utils/trackFormatter.dart';
 
 part 'track.g.dart';
@@ -43,6 +47,17 @@ abstract class _TrackBase with Store {
   _TrackBase() {
     this.reset();
   }
+
+  TrackEntity toEntity(UserEntity user) => TrackEntity(
+        user: user,
+        startSpeed: this.startSpeed,
+        maxSpeed: this.maxSpeed,
+        distance: this.distance,
+        time: this.timer,
+        coordinates: this.coordinates,
+        checkSum: CryptoUtils.genSha256(
+            DateFormat('yyyy-MM-ddTHH:mm:ss.mmm').format(DateTime.now())),
+      );
 
   @action
   reset() {

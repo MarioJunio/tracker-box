@@ -4,11 +4,12 @@ import 'package:flutter_modular/flutter_modular.dart';
 class AppWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
       debugShowCheckedModeBanner: false,
-      title: 'Flutter Slidy',
+      title: 'Tracker BOX',
       theme: ThemeData(primarySwatch: Colors.teal, primaryColor: Colors.teal),
-      initialRoute: '/',
-    ).modular();
+      routeInformationParser: Modular.routeInformationParser,
+      routerDelegate: Modular.routerDelegate,
+    );
   }
 }

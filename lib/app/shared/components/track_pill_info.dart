@@ -1,10 +1,8 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:tracker_box/app/core/entities/track_entity.dart';
 import 'package:tracker_box/app/shared/utils/constants.dart';
-import 'package:tracker_box/app/shared/utils/map_utils.dart';
 import 'package:tracker_box/app/shared/utils/trackFormatter.dart';
 
 class TrackPillInfo extends StatefulWidget {
@@ -20,20 +18,6 @@ class TrackPillInfo extends StatefulWidget {
 }
 
 class _TrackPillInfoState extends State<TrackPillInfo> {
-  Uint8List? icon;
-
-  @override
-  void initState() {
-    super.initState();
-
-    MapUtils.drawTrackMarkerDot(60, 60, Colors.blueAccent.shade200)
-        .then((value) {
-      setState(() {
-        icon = value;
-      });
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return AnimatedPositioned(
@@ -81,19 +65,23 @@ class _TrackPillInfoState extends State<TrackPillInfo> {
                           .bodyText1!
                           .copyWith(color: Colors.blueAccent.shade200),
                     ),
-                    _metric("Distância",
-                        TrackFormatter.formatDistance(widget.track?.distance ?? 0)),
+                    _metric(
+                        "Distância",
+                        TrackFormatter.formatDistance(
+                            widget.track?.distance ?? 0)),
                     _metric("Tempo",
                         TrackFormatter.formatTimer(widget.track?.time ?? 0)),
-                    _metric("Velocidade máxima",
-                        TrackFormatter.formatSpeed(widget.track?.maxSpeed ?? 0)),
+                    _metric(
+                        "Velocidade máxima",
+                        TrackFormatter.formatSpeed(
+                            widget.track?.maxSpeed ?? 0)),
                   ],
                 ),
               ),
             ),
-            icon != null
+            widget.track?.icon != null
                 ? Image.memory(
-                    icon!,
+                    widget.track!.icon!,
                     width: 40,
                     height: 40,
                   )
